@@ -1,0 +1,6 @@
+1. conda create -n augtools python=3.8  
+    conda activate augtools
+2. python setup.py develop
+3. conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
+4. pip install opencv-python
+5. pip install numpy matplotlib
