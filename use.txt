@@ -4,3 +4,4 @@
 3. conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
 4. pip install opencv-python
 5. pip install numpy matplotlib
+6. pip install gdown

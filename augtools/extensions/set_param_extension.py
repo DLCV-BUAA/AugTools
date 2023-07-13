@@ -2,7 +2,7 @@ from augtools.extensions.extension import Extension
 
 class SetParamExtension(Extension):
     def __init__(self, param):
-        self.param = param
+        self.model_path = param
     def _get_rs(self, rs, **kwargs):
         rs.update(self.param)
         return rs
