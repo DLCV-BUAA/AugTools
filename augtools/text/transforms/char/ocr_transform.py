@@ -33,7 +33,7 @@ class OcrTransform(CharTransform):
     """
 
     def __init__(self, action='substitute', aug_char_min=2, aug_char_max=10, aug_char_p=0.3,
-                 aug_word_p=0.5, aug_word_min=1, aug_word_max=10, stopwords=None,
+                 aug_word_p=0.3, aug_word_min=1, aug_word_max=10, stopwords=None,
                  tokenizer=None, reverse_tokenizer=None, stopwords_regex=None, min_char=1, 
                  dict_of_path=None, always_apply = True, p = 0.5):
         super().__init__(
@@ -53,6 +53,6 @@ class OcrTransform(CharTransform):
 if __name__ == '__main__':
     text = 'i am 00000 years old, yean'
     ocr_transform = OcrTransform()
-    tran = ocr_transform(text=text,force_apply=True,n=3)
+    tran = ocr_transform(text=text,force_apply=True,n=3,aug_word_p=0.3)
     print(text)
     print(tran['text'])

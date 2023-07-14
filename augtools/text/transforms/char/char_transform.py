@@ -17,7 +17,7 @@ class CharTransform(TextTransform):
                  stopwords_regex=None, include_special_char=True, always_apply = False, p = 0.5):
         
         super().__init__(
-            method='CHAR', action=action, aug_min=None, aug_max=None, always_apply = False, p = 0.5
+            method='CHAR', action=action, aug_min=None, aug_max=None, always_apply = always_apply, p = p
         )
         self.aug_p = None
         self.aug_char_min = aug_char_min

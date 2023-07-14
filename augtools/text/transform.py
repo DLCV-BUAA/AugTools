@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union, cast, Iterable
 from warnings import warn
 import random
 import math
@@ -23,13 +23,6 @@ class TextTransform(BasicTransform):
 
     
     def _compute_x(self, rs=None, **kwargs):
-        """
-            前序操作： 清洗数据、根据初始化参数确定用来替换字符的模型
-            如果data是list，增强后的data也list，每一句是只有一条增强
-            如果data是str，增强后的data是self.n
-            当前操作：
-
-        """
         for key in rs['x']:
             if kwargs[key] is not None:
                 text = kwargs[key]
@@ -40,16 +33,30 @@ class TextTransform(BasicTransform):
                 argn = kwargs.get('n', None)
                 aug_num = argn if argn is not None else self.n
                 action_func = self._action_select().get(self.action, None)
-                if action_func is not None:
-                    if isinstance(clean_text, list):
-                        augment_result = [action_func(d, rs) for d in clean_text]
-                    else:
-                        augment_result = [action_func(clean_text, rs) for _ in range(aug_num)]
+                max_loop = 10
+                for i in range(max_loop):
+                    if action_func is not None:
+                        if isinstance(clean_text, list):
+                            augment_result = [action_func(d, rs) for d in clean_text]
+                            break
+                        else:
+                            augment_result = [action_func(clean_text, rs) for _ in range(aug_num)]
+                            augment_result = self._duplicate_augments(augment_result)
+                            if len(augment_result) >= aug_num:
+                                augment_result = augment_result[:aug_num]
+                                break
                     
-            
+                # TODO:去除重复增强结果   通过多个循环
                 kwargs[key] = augment_result    
   
         return kwargs, rs
+    
+    def _duplicate_augments(self, augments):
+        no_duplicate_augments = []
+        for augment in augments:
+            if augment not in no_duplicate_augments:
+                no_duplicate_augments.append(augment)
+        return no_duplicate_augments
     
     def _extension(self):
         extensions = [
@@ -74,9 +81,11 @@ class TextTransform(BasicTransform):
         }
     
     def _clean_data(cls, text):
-        if isinstance(text, list) :
-            return [d.strip() for d in text]
-        return text.strip()
+        if isinstance(text, str):
+            return text.strip()
+        if isinstance(text, Iterable) :
+            return [d.strip() if d else d for d in text]
+        return str(text).strip()
     
     def sample(cls, x, num=None):
         if isinstance(x, list):
@@ -102,5 +111,3 @@ class TextTransform(BasicTransform):
     def split(self, data):
         raise NotImplementedError
     
-    
-

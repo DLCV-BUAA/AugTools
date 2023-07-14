@@ -12,32 +12,28 @@ from augtools.text.transforms.utils.token import *
 
 
 class WordTransform(TextTransform):
-    def __init__(self, action, min_char=2, aug_char_min=1, aug_char_max=10, aug_char_p=0.3, aug_word_min=1, 
-                 aug_word_max=10, aug_word_p=0.3, tokenizer=None, reverse_tokenizer=None,stopwords=None, swap_mode='random',
-                 stopwords_regex=None, include_special_char=True, always_apply = False, p = 0.5):
+    
+    def __init__(self, action, aug_min=1, aug_max=10, aug_p=0.3, stopwords=None,
+                 tokenizer=None, reverse_tokenizer=None, swap_mode='random',
+                 stopwords_regex=None, always_apply = True, p = 0.5):
         
         super().__init__(
-            method='CHAR', action=action, aug_min=None, aug_max=None, always_apply = False, p = 0.5
+            method='WORD', action=action, aug_min=aug_min, aug_max=aug_max, always_apply = always_apply, p = p
         )
-        self.aug_p = None
-        self.aug_char_min = aug_char_min
-        self.aug_char_max = aug_char_max
-        self.aug_char_p = aug_char_p
-        self.aug_word_min = aug_word_min
-        self.aug_word_max = aug_word_max
-        self.aug_word_p = aug_word_p
-        self.min_char = min_char
-
+        self.aug_p = aug_p
         self.tokenizer = tokenizer or Tokenizer.tokenizer
         self.reverse_tokenizer = reverse_tokenizer or Tokenizer.reverse_tokenizer
         self.stopwords = stopwords
-        self.stopwords_regex = re.compile(stopwords_regex) if stopwords_regex is not None else stopwords_regex
-        self.include_special_char = include_special_char
+        self.stopwords_regex = re.compile(stopwords_regex) if stopwords_regex else stopwords_regex
+
         self.swap_mode = swap_mode
 
 
     def _skip_aug(self, token_idxes, tokens):
         return token_idxes
+    
+    def _is_stop_words(self, token):
+        return self.stopwords is not None and token in self.stopwords
 
     def _pre_skip_aug(self, tokens, tuple_idx=None):
         results = []
@@ -46,9 +42,9 @@ class WordTransform(TextTransform):
                 _token = token[tuple_idx]
             else:
                 _token = token
-            if _token in string.punctuation and not self.include_special_char:
+            if _token in string.punctuation:
                 continue
-            if self.stopwords is not None and _token in self.stopwords:
+            if self._is_stop_words(_token):
                 continue
             if self.stopwords_regex is not None and (
                     self.stopwords_regex.match(_token) or self.stopwords_regex.match(' '+_token+' ') or
@@ -267,7 +263,7 @@ class WordTransform(TextTransform):
             new_token = ''.join(chars)
             result_tokens.append(new_token)
 
-        return self._post_process(result_tokens)      
+        return self._post_process(result_tokens)        
 
         
     
