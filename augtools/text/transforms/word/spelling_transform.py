@@ -28,8 +28,6 @@ class SpellingTransform(WordTransform):
     :param func reverse_tokenizer: Customize reverse of tokenization process
     :param str name: Name of this augmenter
 
-    >>> import nlpaug.augmenter.word as naw
-    >>> aug = naw.SpellingAug(dict_path='./spelling_en.txt')
     """
 
     def __init__(self, dict_path=None, aug_min=1, aug_max=10, aug_p=0.3, stopwords=None,

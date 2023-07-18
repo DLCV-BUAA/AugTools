@@ -93,21 +93,21 @@ class TextTransform(BasicTransform):
         elif isinstance(x, int):
             return np.random.randint(1, x-1)
 
-    def insert(self, data):
+    def insert(self, data, rs=None):
         raise NotImplementedError
 
-    def substitute(self, data):
+    def substitute(self, data, rs=None):
         raise NotImplementedError
 
-    def swap(self, data):
+    def swap(self, data, rs=None):
         raise NotImplementedError
 
-    def delete(self, data):
+    def delete(self, data, rs=None):
         raise NotImplementedError
 
-    def crop(self, data):
+    def crop(self, data, rs=None):
         raise NotImplementedError        
 
-    def split(self, data):
+    def split(self, data, rs=None):
         raise NotImplementedError
     
