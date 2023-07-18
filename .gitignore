@@ -67,4 +67,6 @@ demo/*
 
 __pycache__/*
 
+augtools/extensions/resource/text/word/glove/*
+
 

@@ -32,7 +32,7 @@ class TextTransform(BasicTransform):
                 augment_result = [last_aug_text]
                 argn = kwargs.get('n', None)
                 aug_num = argn if argn is not None else self.n
-                action_func = self._action_select().get(self.action, None)
+                action_func = self._action_select().get(self.action.lower(), None)
                 max_loop = 10
                 for i in range(max_loop):
                     if action_func is not None:

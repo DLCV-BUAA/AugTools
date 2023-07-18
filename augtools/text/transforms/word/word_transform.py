@@ -29,9 +29,10 @@ class WordTransform(TextTransform):
         self.swap_mode = swap_mode
 
 
-    def _skip_aug(self, token_idxes, tokens):
+    def _skip_aug(self, token_idxes, tokens, model=None):
         return token_idxes
     
+
     def _is_stop_words(self, token):
         return self.stopwords is not None and token in self.stopwords
 
@@ -42,22 +43,32 @@ class WordTransform(TextTransform):
                 _token = token[tuple_idx]
             else:
                 _token = token
+            # skip punctuation
             if _token in string.punctuation:
                 continue
+            # skip stopwords by list
             if self._is_stop_words(_token):
                 continue
+            # skip stopwords by regex
+            # https://github.com/makcedward/nlpaug/issues/81
             if self.stopwords_regex is not None and (
                     self.stopwords_regex.match(_token) or self.stopwords_regex.match(' '+_token+' ') or
                     self.stopwords_regex.match(' '+_token) or self.stopwords_regex.match(_token+' ')):
-                continue
-            if len(token) < self.min_char:
                 continue
 
             results.append(token_idx)
 
         return results
-    
-    def _generate_aug_cnt(self, size, aug_min, aug_max, aug_p=None):
+
+
+    def _align_capitalization(self, src_token, dest_token):
+        if self.get_word_case(src_token) == 'capitalize' and self.get_word_case(dest_token) == 'lower':
+            return dest_token.capitalize()
+        return dest_token
+
+    def _generate_aug_cnt(self, size, aug_min=1, aug_max=10, aug_p=None):
+        if size == 0:
+            return 0
         if aug_p is not None:
             percent = aug_p
         elif self.aug_p:
@@ -71,199 +82,117 @@ class WordTransform(TextTransform):
         if aug_max and cnt > aug_max:
             return aug_max
         return cnt
-
-    def _get_aug_idxes(self, tokens, aug_min, aug_max, aug_p, mode):
-        aug_cnt = self._generate_aug_cnt(len(tokens), aug_min, aug_max, aug_p)
-
-        if mode == 'WORD' or mode == 'word':
-            idxes = self._pre_skip_aug(tokens)
-        elif mode == 'CHAR' or mode == 'char':
-            idxes = [i for i, t in enumerate(tokens)]
-            idxes = self._skip_aug(idxes, tokens)
-
-        if len(idxes) == 0:
+    
+    def _get_aug_idxes(self, tokens, model=None):
+        aug_cnt = self._generate_aug_cnt(len(tokens))
+        word_idxes = self._pre_skip_aug(tokens)
+        word_idxes = self._skip_aug(word_idxes, tokens, model)
+        if len(word_idxes) == 0:
             return []
-        if len(idxes) < aug_cnt:
-            aug_cnt = len(idxes)
-        aug_idxes = self.sample(idxes, aug_cnt)
+        if len(word_idxes) < aug_cnt:
+            aug_cnt = len(word_idxes)
+        aug_idexes = self.sample(word_idxes, aug_cnt)
+        return aug_idexes
+
+    def _get_random_aug_idxes(self, tokens, model=None):
+        aug_cnt = self._generate_aug_cnt(len(tokens))
+        word_idxes = self._pre_skip_aug(tokens)
+        if len(word_idxes) < aug_cnt:
+            aug_cnt = len(word_idxes)
+
+        aug_idxes = self.sample(word_idxes, aug_cnt)
+
         return aug_idxes
 
-    def _pre_process(self, data=None):
-        if not data or not data.strip():
-                return data
+    def _get_aug_range_idxes(self, tokens, model=None):
+        aug_cnt = self._generate_aug_cnt(len(tokens))
+        if aug_cnt == 0 or len(tokens) == 0:
+            return []
+        direction = self.sample([-1, 1], 1)[0]
 
-        change_seq = 0
-        data = self.tokenizer(data)
+        if direction > 0:
+            # right
+            word_idxes = [i for i, _ in enumerate(tokens[:-aug_cnt+1])]
+        else:
+            # left
+            word_idxes = [i for i, _ in enumerate(tokens[aug_cnt-1:])]
 
-        aug_word_idxes = self._get_aug_idxes(
-            data, self.aug_word_min, self.aug_word_max, self.aug_word_p, 'WORD')
-        return data, aug_word_idxes
-    
-    def _post_process(self, result_tokens):
-        return self.reverse_tokenizer(result_tokens)
-    
-    def _get_swap_position(self, pos, token_length, mode='adjacent'):
-        if mode == 'adjacent':
-            if pos == 0:
-                # Force swap with next character if it is first character
-                return pos + 1
-            elif pos == token_length:
-                # Force swap with previous character if it is last character
-                return pos - 1
-            else:
-                return pos + self.sample([-1, 1], 1)[0]
-        elif mode == 'middle':
-            # Middle Random: https://arxiv.org/pdf/1711.02173.pdf
-            candidates = [_ for _ in range(token_length) if _ not in [0, pos, token_length]]
-            if len(candidates) == 0:
-                return pos
-            return self.sample(candidates, 1)[0]
-        elif mode == 'random':
-            # Fully Random: https://arxiv.org/pdf/1711.02173.pdf
-            candidates = [_ for _ in range(token_length) if _ not in [pos]]
-            if len(candidates) < 1:
-                return pos
-            return self.sample(candidates, 1)[0]
+        start_aug_idx = self.sample(word_idxes, 1)[0]
+        aug_idxes = [start_aug_idx + _*direction for _ in range(aug_cnt)]
 
-    def substitute(self, data, rs=None):
-        tokens, aug_word_idxes = self._pre_process(data)
-        if aug_word_idxes is None:
-            return data
+        return aug_idxes
 
-        result_tokens = []
-        for token_i, token in enumerate(tokens):
-            
-            if token_i not in aug_word_idxes:
-                result_tokens.append(token)
-                continue
+    @classmethod
+    def get_word_case(cls, word):
+        if len(word) == 0:
+            return 'empty'
 
-            chars = list(token)
-            aug_char_idxes = self._get_aug_idxes(chars, self.aug_char_min, self.aug_char_max, self.aug_char_p,
-                                                 'CHAR')
-            if aug_char_idxes is None or len(aug_char_idxes) < 1:
-                result_tokens.append(token)
-                continue
-            
-            substitute_chars = []
-            for char_i, char in enumerate(chars):
-                if char_i not in aug_char_idxes:
-                    substitute_chars.append(char)
+        if len(word) == 1 and word.isupper():
+            return 'capitalize'
+
+        if word.isupper():
+            return 'upper'
+        elif word.islower():
+            return 'lower'
+        else:
+            for i, c in enumerate(word):
+                if i == 0:  # do not check first character
                     continue
-                candidates = rs['model'](chars[char_i])
-                if candidates is not None and len(candidates) > 0:
-                    substitute_chars.append(self.sample(candidates, 1)[0])
-                else:
-                    substitute_chars.append(char)
+                if c.isupper():
+                    return 'mixed'
 
-            # No capitalization alignment as this augmenter try to simulate random error
-            new_token = ''.join(substitute_chars)
-            result_tokens.append(new_token)
+            if word[0].isupper():
+                return 'capitalize'
+            return 'unknown'
 
-        return self._post_process(result_tokens)
+    def replace_stopword_by_reserved_word(self, text, stopword_reg, reserve_word):
+        replaced_text = ''
+        reserved_stopwords = []
     
-
-    def swap(self, data, rs=None):
-        tokens, aug_word_idxes = self._pre_process(data)
-        if aug_word_idxes is None:
-            return data
-
-        result_tokens = []
-        for token_i, token in enumerate(tokens):
-            if token_i not in aug_word_idxes:
-                result_tokens.append(token)
-                continue
-
-            chars = list(token)
-            aug_char_idxes = self._get_aug_idxes(chars, self.aug_char_min, self.aug_char_max, self.aug_char_p,
-                                                 'CHAR')
-            if aug_char_idxes is None or len(aug_char_idxes) < 1:
-                result_tokens.append(token)
-                continue
+        # pad space for easy handling
+        replaced_text = ' ' + text + ' '
+        for m in reversed(list(stopword_reg.finditer(replaced_text))):
+            # Get position excluding prefix and suffix
+            start, end, token = m.start(), m.end(), m.group()
+            # replace stopword by reserve word
+            replaced_text = replaced_text[:start] + reserve_word + replaced_text[end:]
+            reserved_stopwords.append(token) # reversed order but it will consumed in reversed order later too
+        
+        # trim
+        replaced_text = replaced_text[1:-1]
             
-            for char_i in aug_char_idxes:
-                swap_position = self._get_swap_position(char_i, len(chars)-1, mode=self.swap_mode)
-                
-                is_original_upper, is_swap_upper = chars[char_i].isupper(), chars[swap_position].isupper()
-                original_chars = chars.copy()
-                chars[char_i], chars[swap_position] = original_chars[swap_position], original_chars[char_i]
+        return replaced_text, reserved_stopwords
 
-                # Swap case
-                if is_original_upper:
-                    chars[char_i] = chars[char_i].upper()
-                else:
-                    chars[char_i] = chars[char_i].lower()
-                if is_swap_upper:
-                    chars[swap_position] = chars[swap_position].upper()
-                else:
-                    chars[swap_position] = chars[swap_position].lower()
+    def replace_reserve_word_by_stopword(self, text, reserve_word_aug, original_stopwords):
+        # pad space for easy handling
+        replaced_text = ' ' + text + ' '
+        matched = list(reserve_word_aug.finditer(replaced_text))[::-1]
+        
+        # TODO:?
+        if len(matched) != len(original_stopwords):
+            pass
+        if len(matched) > len(original_stopwords):
+            pass
+        if len(matched) < len(original_stopwords):
+            pass
+        
+        for m, orig_stopword in zip(matched, original_stopwords):
+            # Get position excluding prefix and suffix
+            start, end = m.start(), m.end()
+            # replace stopword by reserve word
+            replaced_text = replaced_text[:start] + orig_stopword + replaced_text[end:]
+        
+        # trim
+        replaced_text = replaced_text[1:-1]
+        
+        return replaced_text
 
-            # No capitalization alignment as this augmenter try to simulate random error
+    def preprocess(self, data):
+        ...
 
-            new_token = ''.join(chars)
-            result_tokens.append(new_token)
-
-        return self._post_process(result_tokens)
-
-    def delete(self, data, rs=None):
-        tokens, aug_word_idxes = self._pre_process(data)
-        if aug_word_idxes is None:
-            return data
-
-        result_tokens = []
-        for token_i, token in enumerate(tokens):
-            if token_i not in aug_word_idxes:
-                result_tokens.append(token)
-                continue
-
-            chars = list(token)
-            aug_char_idxes = self._get_aug_idxes(chars, self.aug_char_min, self.aug_char_max, self.aug_char_p,
-                                                 'CHAR')
-            if aug_char_idxes is None or len(aug_char_idxes) < 1:
-                result_tokens.append(token)
-                continue
-
-            aug_char_idxes.sort(reverse=True)
-            for char_i in aug_char_idxes:
-                del chars[char_i]
-
-            # No capitalization alignment as this augmenter try to simulate random error
-
-            new_token = ''.join(chars)
-            result_tokens.append(new_token)
-
-        return self._post_process(result_tokens)
-
-    
-    def insert(self, data, rs=None):
-        tokens, aug_word_idxes = self._pre_process(data)
-        if aug_word_idxes is None:
-            return data
-
-        result_tokens = []
-        for token_i, token in enumerate(tokens):
-            if token_i not in aug_word_idxes:
-                result_tokens.append(token)
-                continue
-
-            chars = list(token)
-            aug_char_idxes = self._get_aug_idxes(chars, self.aug_char_min, self.aug_char_max, self.aug_char_p,
-                                                 'CHAR')
-            if aug_char_idxes is None or len(aug_char_idxes) < 1:
-                result_tokens.append(token)
-                continue
-
-            aug_char_idxes.sort(reverse=True)
-            for char_i in aug_char_idxes:
-                candidates = rs['model'](chars[char_i])
-                if candidates is not None and len(candidates) > 0:
-                    chars.insert(char_i, self.sample(candidates, 1)[0])
-
-            # No capitalization alignment as this augmenter try to simulate random error
-
-            new_token = ''.join(chars)
-            result_tokens.append(new_token)
-
-        return self._post_process(result_tokens)        
+    def postprocess(self, data):
+        ...
+  
 
         
     

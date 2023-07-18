@@ -17,9 +17,15 @@ class DownloadUtil:
 
     >>> from nlpaug.util.file.download import DownloadUtil
     """
+    @staticmethod
+    def get_default_dest_dir(dest_dir, model_name='word2vec'):
+        if dest_dir is None:
+            rs_dir = LibraryUtil.get_res_dir()
+            dest_dir = os.path.join(rs_dir, 'text', 'word', model_name)
+        return dest_dir
 
     @staticmethod
-    def download_word2vec(dest_dir: str = "."):
+    def download_word2vec(dest_dir=None):
         """
         :param str dest_dir: Directory of saving file
         :return: Word2Vec C binary file named 'GoogleNews-vectors-negative300.bin'
@@ -27,15 +33,17 @@ class DownloadUtil:
         >>> DownloadUtil.download_word2vec('.')
 
         """
+        dest_dir = DownloadUtil.get_default_dest_dir(dest_dir, 'word2vec')
         file_path = DownloadUtil.download_from_google_drive(
             url="https://drive.google.com/uc?export=download&id=0B7XkCwpI5KDYNlNUTTlSS21pQmM",
             dest_dir=dest_dir,
             dest_file="GoogleNews-vectors-negative300.bin.gz",
         )
         DownloadUtil.unzip(file_path, dest_dir=dest_dir)
+        return dest_dir
 
     @staticmethod
-    def download_glove(model_name, dest_dir):
+    def download_glove(model_name, dest_dir=None):
         """
         :param str model_name: GloVe pre-trained model name. Possible values are 'glove.6B', 'glove.42B.300d',
             'glove.840B.300d' and 'glove.twitter.27B'
@@ -44,15 +52,15 @@ class DownloadUtil:
         >>> DownloadUtil.download_glove('glove.6B', '.')
 
         """
-
+        dest_dir = DownloadUtil.get_default_dest_dir(dest_dir, 'glove')
         url = ""
-        if model_name == "glove.6B":
+        if model_name.lower() == "glove.6B".lower():
             url = "http://nlp.stanford.edu/data/glove.6B.zip"
-        elif model_name == "glove.42B.300d":
+        elif model_name.lower() == "glove.42B.300d".lower():
             url = "http://nlp.stanford.edu/data/glove.42B.300d.zip"
-        elif model_name == "glove.840B.300d":
+        elif model_name.lower() == "glove.840B.300d".lower():
             url = "http://nlp.stanford.edu/data/glove.840B.300d.zip"
-        elif model_name == "glove.twitter.27B":
+        elif model_name.lower() == "glove.twitter.27B".lower():
             url = ("http://nlp.stanford.edu/data/glove.twitter.27B.zip",)
         else:
             possible_values = [
@@ -67,9 +75,10 @@ class DownloadUtil:
 
         file_path = DownloadUtil.download(url, dest_dir=dest_dir)
         DownloadUtil.unzip(file_path)
+        return dest_dir
 
     @staticmethod
-    def download_fasttext(model_name, dest_dir):
+    def download_fasttext(model_name, dest_dir=None):
         """
         :param str model_name: GloVe pre-trained model name. Possible values are 'wiki-news-300d-1M',
             'wiki-news-300d-1M-subword', 'crawl-300d-2M' and 'crawl-300d-2M-subword'
@@ -78,7 +87,7 @@ class DownloadUtil:
         >>> DownloadUtil.download_fasttext('glove.6B', '.')
 
         """
-
+        dest_dir = DownloadUtil.get_default_dest_dir(dest_dir, 'fasttext')
         url = ""
         if model_name == "wiki-news-300d-1M":
             url = "https://dl.fbaipublicfiles.com/fasttext/vectors-english/wiki-news-300d-1M.vec.zip"
@@ -96,12 +105,15 @@ class DownloadUtil:
 
         file_path = DownloadUtil.download(url, dest_dir=dest_dir)
         DownloadUtil.unzip(file_path)
+        return dest_dir
 
     @staticmethod
-    def download_back_translation(dest_dir):
+    def download_back_translation(dest_dir=None):
+        dest_dir = DownloadUtil.get_default_dest_dir(dest_dir, 'back_translation')
         url = "https://storage.googleapis.com/uda_model/text/back_trans_checkpoints.zip"
         file_path = DownloadUtil.download(url, dest_dir=dest_dir)
         DownloadUtil.unzip(file_path)
+        return dest_dir
 
     @staticmethod
     def download(src, dest_dir, dest_file=None):
@@ -152,6 +164,7 @@ class DownloadUtil:
         dest_dir: str = ".",
         dest_file: str = "/tmp/model.zip",
     ) -> str:
+        dest_dir = DownloadUtil.get_default_dest_dir(dest_dir, 'google_drive')
         return gdown.download(url, output=f"{dest_dir}/{dest_file}", quiet=False)
     
     

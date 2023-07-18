@@ -5,3 +5,6 @@
 4. pip install opencv-python
 5. pip install numpy matplotlib
 6. pip install gdown
+7. pip install nltk
+    可能需要自己单独下载nltk的数据文件
+8. pip install gensim

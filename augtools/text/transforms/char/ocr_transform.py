@@ -45,7 +45,7 @@ class OcrTransform(CharTransform):
     
     def _append_extensions(self):
         return [
-            GetOcrModelExtension(dict_of_path=self.dict_of_path, mode='char'),
+            GetOcrModelExtension(dict_of_path=self.dict_of_path, method='char'),
         ]
 
 
