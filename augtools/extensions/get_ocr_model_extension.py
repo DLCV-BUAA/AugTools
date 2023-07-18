@@ -4,8 +4,8 @@ from augtools.utils.text_model_utils import BaseModel
 
 class GetOcrModelExtension(Extension):
     def __init__(self, dict_of_path=None, method='CHAR'):
-        self.modmethode = method
-        self.model = Ocr(dict_of_path, mode)
+        self.method = method
+        self.model = Ocr(dict_of_path, method)
     def _get_rs(self, rs, **kwargs):
         rs['model'] = self.model
         return rs

@@ -52,7 +52,7 @@ class OcrTransform(CharTransform):
 
 if __name__ == '__main__':
     text = 'i am 00000 years old, yean'
-    ocr_transform = OcrTransform()
+    ocr_transform = OcrTransform(action='delete')
     tran = ocr_transform(text=text,force_apply=True,n=3,aug_word_p=0.3)
     print(text)
     print(tran['text'])
