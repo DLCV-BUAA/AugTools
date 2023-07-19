@@ -6,6 +6,7 @@ from nltk.corpus import wordnet
 from augtools.extensions.get_wordnet_model_extension import WordNet
 from augtools.extensions.get_word_spelling_model_extension import Spelling
 from augtools.extensions.get_word_emb_glove_extension import Glove
+from augtools.extensions.get_machine_translation_model_extension import MtModels
 
 class GetWordDcitModelExtension(Extension):
     def __init__(self, name='wordnet', *arg, **kwargs):
@@ -19,6 +20,7 @@ class GetWordDcitModelExtension(Extension):
             'wordnet': WordNet,
             'spelling': Spelling,
             'glove': Glove,
+            'machine_translation': MtModels,
             
         }.get(name, None)
     

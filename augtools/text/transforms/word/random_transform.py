@@ -106,7 +106,10 @@ class RandomTransform(WordTransform):
     # https://arxiv.org/pdf/1703.02573.pdf, https://arxiv.org/pdf/1712.06751.pdf, https://arxiv.org/pdf/1806.09030.pdf
     # https://arxiv.org/pdf/1905.11268.pdf,
     def substitute(self, data, rs=None):
+        if not data or not data.strip():
+            return data
         tokens = self._pre_process(data)
+        
         aug_idxes = self._get_random_aug_idxes(tokens)
         if aug_idxes is None or len(aug_idxes) == 0:
             return data
@@ -126,6 +129,8 @@ class RandomTransform(WordTransform):
 
     # https://arxiv.org/pdf/1905.11268.pdf, https://arxiv.org/pdf/1809.02079.pdf, https://arxiv.org/pdf/1903.09460.pdf
     def delete(self, data, rs=None):
+        if not data or not data.strip():
+            return data
         tokens = self._pre_process(data)
         aug_idxes = self._get_random_aug_idxes(tokens)
         if aug_idxes is None or len(aug_idxes) == 0:
@@ -142,6 +147,8 @@ class RandomTransform(WordTransform):
 
     # https://github.com/makcedward/nlpaug/issues/126
     def crop(self, data, rs=None):
+        if not data or not data.strip():
+            return data
         tokens = self._pre_process(data)
         aug_idxes = self._get_aug_range_idxes(tokens)
         if aug_idxes is None or len(aug_idxes) == 0:

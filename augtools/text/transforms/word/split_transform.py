@@ -45,6 +45,8 @@ class SplitTransform(WordTransform):
         
 
     def split(self, data, rs=None):
+        if not data or not data.strip():
+            return data
         tokens = self._pre_process(data)
         aug_idxes = self._get_aug_idxes(tokens)
         if aug_idxes is None or len(aug_idxes) == 0:

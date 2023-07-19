@@ -8,3 +8,5 @@
 7. pip install nltk
     可能需要自己单独下载nltk的数据文件
 8. pip install gensim
+9. pip install transforms
+10. pip install sacremoses
