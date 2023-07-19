@@ -7,6 +7,8 @@ from augtools.extensions.get_wordnet_model_extension import WordNet
 from augtools.extensions.get_word_spelling_model_extension import Spelling
 from augtools.extensions.get_word_emb_glove_extension import Glove
 from augtools.extensions.get_machine_translation_model_extension import MtModels
+from augtools.extensions.get_word_emb_word2vec_extension import Word2vec
+from augtools.extensions.get_word_emb_fasttext_extension import Fasttext
 
 class GetWordDcitModelExtension(Extension):
     def __init__(self, name='wordnet', *arg, **kwargs):
@@ -21,6 +23,8 @@ class GetWordDcitModelExtension(Extension):
             'spelling': Spelling,
             'glove': Glove,
             'machine_translation': MtModels,
+            'word2vec': Word2vec,
+            'fasttext': Fasttext,
             
         }.get(name, None)
     
