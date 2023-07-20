@@ -15,7 +15,6 @@ class GetWordMTModelExtension(Extension):
                 src_model_name='facebook/wmt19-en-de',
                 tgt_model_name='facebook/wmt19-de-en', 
                 device='cuda',
-                silence=True,
                 batch_size=32,
                 max_length=300,
         method='WORD'):
@@ -25,7 +24,6 @@ class GetWordMTModelExtension(Extension):
             src_model_name=src_model_name,
             tgt_model_name=tgt_model_name, 
             device=device,
-            silence=silence,
             batch_size=batch_size,
             max_length=max_length,
         method=method)
@@ -37,8 +35,8 @@ class GetWordMTModelExtension(Extension):
 
 class MtModels(LanguageModels):
     def __init__(self, src_model_name='facebook/wmt19-en-de', tgt_model_name='facebook/wmt19-de-en',
-                 device='cuda', silence=True, batch_size=32, max_length=300, method='word'):
-        super().__init__(device, model_type=None, silence=silence, method=method)
+                 device='cuda', batch_size=32, max_length=300, method='word'):
+        super().__init__(device, model_type=None, method=method)
         try:
             from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
         except ModuleNotFoundError:

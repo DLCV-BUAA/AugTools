@@ -10,6 +10,8 @@ from augtools.extensions.get_machine_translation_model_extension import MtModels
 from augtools.extensions.get_word_emb_word2vec_extension import Word2vec
 from augtools.extensions.get_word_emb_fasttext_extension import Fasttext
 
+from augtools.extensions.get_fill_mask_model_extension import FMModels
+
 class GetWordDcitModelExtension(Extension):
     def __init__(self, name='wordnet', *arg, **kwargs):
         self.model = self.model_select(name.lower())(*arg, **kwargs)
@@ -25,6 +27,7 @@ class GetWordDcitModelExtension(Extension):
             'machine_translation': MtModels,
             'word2vec': Word2vec,
             'fasttext': Fasttext,
+            'fill_mask_model': FMModels,
             
         }.get(name, None)
     

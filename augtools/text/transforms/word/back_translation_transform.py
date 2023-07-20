@@ -33,7 +33,7 @@ class BackTranslationTransform(WordTransform):
     """
 
     def __init__(self, from_model_name='facebook/wmt19-en-de', to_model_name='facebook/wmt19-de-en',
-        device='cuda', batch_size=32, max_length=300, action='subtitute', silence=True):
+        device='cuda', batch_size=32, max_length=300, action='substitute'):
         super().__init__(
             action=action, aug_p=None, aug_min=None, aug_max=None, tokenizer=None, reverse_tokenizer=None)
         self.aug_src = 'machine_translation'
@@ -43,7 +43,6 @@ class BackTranslationTransform(WordTransform):
         self.device = device
         self.batch_size = batch_size
         self.max_length = max_length
-        self.silence = silence
 
     def _append_extensions(self):
         
@@ -55,7 +54,6 @@ class BackTranslationTransform(WordTransform):
                 device=self.device,
                 batch_size=self.batch_size,
                 max_length=self.max_length,
-                silence=self.silence,
                 method='word'),
         ]
     
@@ -136,9 +134,21 @@ class BackTranslationTransform(WordTransform):
 
         for aug_idx in aug_idxes:
             original_token = tokens[aug_idx]
-            new_token = rs['model'].predict(original_token)
+            output = rs['model'].predict(original_token)
+            
+            candidate = ''
+            if len(output) == 0:
+                # TODO: no result?
+                pass
+            elif len(output) == 1:
+                candidate = output[0]
+            elif len(output) > 1:
+                candidate = self.sample(output, 1)[0]
 
-            augmented_tokens[aug_idx] = new_token
+            if candidate == '':
+                candidate = original_token
+
+            augmented_tokens[aug_idx] = candidate
 
         return self._post_process(augmented_tokens)
 
@@ -180,7 +190,7 @@ class BackTranslationTransform(WordTransform):
 
     def _pre_process(self, data=None):
         if not data or not data.strip():
-                return data
+            return data
 
         tokens = self.tokenizer(data)
 
@@ -191,8 +201,8 @@ class BackTranslationTransform(WordTransform):
         
         
 if __name__ == '__main__':
-    text = 'i eat an apple and hit someone'
-    backtrans_transform = BackTranslationTransform(action='subtitute')
+    text = 'it is easy to say somethon but hard to do'
+    backtrans_transform = BackTranslationTransform(action='substitute')
     tran = backtrans_transform(text=text,force_apply=True,n=3)
     print(text)
     print(tran['text'])  

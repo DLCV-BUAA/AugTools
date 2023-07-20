@@ -64,7 +64,7 @@ class LanguageModels(BaseModel):
     OPTIMIZE_ATTRIBUTES = ['external_memory', 'return_proba']
 
     def __init__(self, device='cpu', model_type='', temperature=1.0, top_k=100, top_p=0.01, batch_size=32,
-        optimize=None, silence=True, method='sentence'):
+        optimize=None, method='sentence'):
         try:
             import torch
         except ModuleNotFoundError:
@@ -79,7 +79,6 @@ class LanguageModels(BaseModel):
         self.top_p = top_p
         self.batch_size = batch_size
         self.optimize = self.init_optimize(optimize)
-        self.silence = silence
 
     @classmethod
     def get_default_optimize_config(cls):
@@ -261,6 +260,15 @@ class LanguageModels(BaseModel):
                 break
 
         return results
+    
+class WordStatistics(BaseModel):
+    def __init__(self, method='word'):
+        super().__init__(method)
+
+
+    @classmethod
+    def choice(cls, x, p, size=1):
+        return np.random.choice(len(x), size, p=p)
         
 if __name__ == '__main__':
     model = BaseModel(method='CHAR')
