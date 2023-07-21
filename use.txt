@@ -8,5 +8,5 @@
 7. pip install nltk
     可能需要自己单独下载nltk的数据文件
 8. pip install gensim
-9. pip install transforms
+9. pip install transforms   # lang model 第一次加载可能会失败，需要第二次下载模型重新运行
 10. pip install sacremoses
