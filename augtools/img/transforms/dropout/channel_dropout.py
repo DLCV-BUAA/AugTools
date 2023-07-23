@@ -72,9 +72,9 @@ if __name__ == '__main__':
     image = prefix + 'test.jpg'
 
     img = read_image(image)
-    # print(img)
 
     transform = ChannelDropout()
     result = transform(img=img, force_apply=True)
+    print(result['img'])
 
     show_image(result['img'])
