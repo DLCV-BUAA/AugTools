@@ -91,7 +91,7 @@ class SynthesisTransform(ImageTransform):
             writer = csv.writer(f)
             writer.writerow(self.metadata_header)
     
-    def __call__(self, fg_img=DEFAULT_FG_IMGS, bg_img=DEFAULT_BG_IMGS):
+    def __call__(self, fg_img=DEFAULT_FG_IMGS, bg_img=DEFAULT_BG_IMGS, mask=None, label=None):
         """
             1. validate config
                 config:{
@@ -119,6 +119,8 @@ class SynthesisTransform(ImageTransform):
         """
         self.fg_img = fg_img
         self.bg_img = bg_img
+        self.label = label
+        self.mask = mask
         self._load_fg_imgs(self.fg_img) # 生成self.fgs and self.fgs_dict
         self._load_bg_imgs(self.bg_img) # 生成self.bgs
         if self.new_dataset_dir:
@@ -133,13 +135,15 @@ class SynthesisTransform(ImageTransform):
         if isinstance(fg_img, str):
             if is_dir(fg_img):
                 self._load_fg_imgs_from_dir(fg_img)
-            elif is_file(fg_img):
+            elif is_file(fg_img) and self.mask and self.label:
                 self._load_fg_imgs_from_file(fg_img)
-        if isinstance(fg_img, tuple) and self.label is None:
-            if is_file(fg_img[0]):
-                if isinstance(obj, class_or_tuple):
-                    self.label = fg_img[1]
-                    self._load_fg_imgs_from_file(fg_img)
+            elif is_file(fg_img):
+                self._load_fg_imgs_from_model(fg_img)
+        else:
+            if self.mask and self.label:
+                self._load_fg_imgs_from_file(fg_img)
+            else:
+                self._load_fg_imgs_from_model(fg_img)
     
     def _load_fg_imgs_from_dir(self, fg_dir):
         if not os.path.exists(fg_dir):
@@ -153,6 +157,31 @@ class SynthesisTransform(ImageTransform):
         for i, label in enumerate(fg_labels):
             self.fgs_dict[label].append(self.fgs[i])
         print('Foregrounds loaded.')
+        
+    def _load_fg_imgs_from_file(self, fg_img):
+        if isinstance(fg_img, str):
+            if not os.path.exists(fg_img):
+                raise ValueError(
+                    f'Foregrounds directory {fg_img} does not exist.')
+            fg_img = load_image(fg_img)
+            
+        self.fg_classes = [self.label]
+        self.fgs = [set_blank_pixels_transparent(fg_img, self.mask[0], self.mask[1])]
+        self.fgs_dict = {self.label: [self.fgs[0]]}
+        print('Foregrounds loaded.')
+    
+    def _load_fg_imgs_from_model(self, fg_img):
+        if isinstance(fg_img, str):
+            if not os.path.exists(fg_img):
+                raise ValueError(
+                    f'Foregrounds directory {fg_img} does not exist.')
+            fg_img = load_image(fg_img)
+        
+        mask, mask_id, label = segment_img(fg_img)
+        self.fg_classes = [label]
+        self.fgs = [set_blank_pixels_transparent(fg_img, mask, mask_id)]
+        self.fgs_dict = {label: [self.fgs[0]]}
+        print('Foregrounds loaded.')
     
     def _load_bg_imgs(self, bg_img):
         if isinstance(bg_img, str):
@@ -160,11 +189,8 @@ class SynthesisTransform(ImageTransform):
                 self._load_bg_imgs_from_dir(bg_img)
             elif is_file(bg_img):
                 self._load_bg_img_from_file(bg_img)
-        if isinstance(bg_img, tuple) and self.label is None:
-            if is_file(bg_img[0]):
-                if isinstance(obj, class_or_tuple):
-                    self.label = bg_img[1]
-                    self._load_bg_img_from_file(bg_img)
+        else:
+            self._load_bg_img_from_file(bg_img)
         
     def _load_bg_imgs_from_dir(self, bg_dir):
         if not os.path.exists(bg_dir):
@@ -174,6 +200,15 @@ class SynthesisTransform(ImageTransform):
         self.bgs = self._thread_pool.map(load_image, bg_fnames)
         self.bgs = self._thread_pool.map(self._preprocess_background, self.bgs)
         self.num_bgs = len(self.bgs)
+        print('Backgrounds loaded.')
+        
+    def _load_bg_img_from_file(bg_img):
+        self.bgs = []
+        if is_file(bg_img):
+            bg_img = load_image(bg_img)
+        bg_img = self._preprocess_background(bg_img)
+        self.num_bgs = 1
+        self.bgs.append(bg_img)
         print('Backgrounds loaded.')
         
     def _preprocess_background(self, bg):
@@ -307,4 +342,6 @@ class SynthesisTransform(ImageTransform):
                 
 if __name__ == '__main__':
     synthesis = SynthesisTransform()
-    synthesis()
+    url = "http://images.cocodataset.org/val2017/000000039769.jpg"
+    image = Image.open(requests.get(url, stream=True).raw)
+    synthesis(fg_img=image)

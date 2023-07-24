@@ -1,6 +1,7 @@
 import os
 import io
 from pathlib import Path
+import requests
 
 import PIL
 from PIL import Image
@@ -182,15 +183,61 @@ def write_backgrounds_csv(new_dataset_dir, backgrounds_dir):
 
     for i, fname in enumerate(bg_filenames):
       writer.writerow([i, fname])
+ 
+def show_img(img):
+    if isinstance(img, str):
+        img = Image.open(img)
+    # 展示图像
+    img.show() 
+    
+
+def set_blank_pixels_transparent(image, mask, mask_id=0):
+    image_copy = image.copy()
+    image_copy = image_copy.convert("RGBA")
+
+    # 获取图像的像素数据
+    pixel_data = image_copy.load()
+
+    # 设置空白像素为透明
+    for y in range(image_copy.height):
+        for x in range(image_copy.width):
+            r, g, b, a = pixel_data[x, y]
+            if mask[y][x] != mask_id:
+                pixel_data[x, y] = (r, g, b, 0)
+    return image_copy
+
+
+def segment_img(img, model='facebook/mask2former-swin-base-coco-panoptic'):
+    from transformers import AutoImageProcessor, Mask2FormerForUniversalSegmentation
+    import torch
+    processor = AutoImageProcessor.from_pretrained(model)
+    model = Mask2FormerForUniversalSegmentation.from_pretrained(model)
+    inputs = processor(img, return_tensors='pt')
+    with torch.no_grad():
+        output = model(**inputs)
+    prediction = processor.post_process_panoptic_segmentation(output, target_sizes=[img.size[::-1]])[0]
+    segment = prediction['segments_info'][0]
+    # print(segment)
+    label = model.config.id2label[segment['label_id']]
+    # print(prediction.keys())
+    return prediction['segmentation'], segment['id'], label
       
       
 if __name__ == '__main__':
-    fgs_dict = {
-        'row0': ['1' , '2', '3'],
-        'row1': ['1' , '2', '3', '4'],
-        'row2': ['1' , '2'],
-        'row3': ['1'],
-        'row4': ['1' , '2', '3'],
-    }
-    index = generate_instance_tuples(fgs_dict)
-    print(index)
+    # fgs_dict = {
+    #     'row0': ['1' , '2', '3'],
+    #     'row1': ['1' , '2', '3', '4'],
+    #     'row2': ['1' , '2'],
+    #     'row3': ['1'],
+    #     'row4': ['1' , '2', '3'],
+    # }
+    # index = generate_instance_tuples(fgs_dict)
+    # print(index)
+
+ 
+    url = "http://images.cocodataset.org/val2017/000000039769.jpg"
+    image = Image.open(requests.get(url, stream=True).raw)
+    mask, mask_id, label = segment_img(image)
+    img_copy = set_blank_pixels_transparent(image, mask, mask_id)
+    show_img(img_copy)
+    print(label)
