@@ -71,12 +71,13 @@ if __name__ == '__main__':
     from augtools.img.transforms.blur.gaussian_blur_transform import GaussianBlur
     # prefix = '../test/'
     # image = prefix + 'test.jpg'
-    image = f'/home/jiajunlong/Music/贾俊龙/数据增强/AugTools/augtools/img/transforms/test/test.jpg'
+    prefix = f'../test/'
+    image = prefix + 'test.jpg'
     img = read_image(image)
-    # bbox = (50, 60, 50, 80)
-    # keypoint = (1, 5, 3, 4)
+    bbox = (50, 60, 50, 80)
+    keypoint = (1, 5, 3, 4)
     # print(img)
-    # bboxs = [(50, 60, 50, 80), (50, 60, 50, 80)]
+    bboxs = [(50, 60, 50, 80), (50, 60, 50, 80)]
     
     sequential = Sequential([
         Blur(),
@@ -84,9 +85,9 @@ if __name__ == '__main__':
         RandomCrop(300, 300)
     ])   
     transform = RandomCrop(100, 100)
-    result = sequential(img=img, force_apply=True)
+    result = sequential(img=img, bboxs=bboxs, force_apply=True)
 
     show_image(result['img'])
-    # print(result['bboxs'])
+    print(result['bboxs'])
         
 

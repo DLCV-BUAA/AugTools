@@ -9,8 +9,6 @@ from augtools.img.transform import ImageTransform
 from augtools.img.transforms.utils.img_utils import *
 
 
-
-
 class GaussianBlur(ImageTransform):
     """Blur the input image using a Gaussian filter with a random kernel size.
 
@@ -70,10 +68,10 @@ if __name__ == '__main__':
     image = prefix + 'test.jpg'
     
     img = read_image(image)
-    # print(img)
-    
+
     transform = GaussianBlur()
     result = transform(img=img, force_apply=True)
+    print(result['img'])
 
     show_image(result['img'])
     
