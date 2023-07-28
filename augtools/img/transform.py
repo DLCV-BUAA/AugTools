@@ -46,7 +46,7 @@ class ImageTransform(BasicTransform):
     def _append_extensions(self):
         return []
 
-    def _compute_x_function(img, rs=None):
+    def _compute_x_function(self, img, rs=None):
         raise NotImplementedError
 
     def _pre_process_x(self, rs=None, **kwargs):

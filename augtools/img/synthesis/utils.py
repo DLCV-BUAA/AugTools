@@ -8,6 +8,8 @@ from PIL import Image
 
 import numpy as np
 
+MODEL = {}
+
 def is_dir(path):
     if os.path.exists(path):
         if os.path.isdir(path):
@@ -191,11 +193,9 @@ def set_blank_pixels_transparent(image, mask, mask_id=0):
     return image_copy.crop((top, left, bottom, right))
 
 
-def segment_img(img, model='facebook/mask2former-swin-base-coco-panoptic'):
-    from transformers import AutoImageProcessor, Mask2FormerForUniversalSegmentation
+def segment_img(img):
     import torch
-    processor = AutoImageProcessor.from_pretrained(model)
-    model = Mask2FormerForUniversalSegmentation.from_pretrained(model)
+    processor, model = init_model()
     inputs = processor(img, return_tensors='pt')
     with torch.no_grad():
         output = model(**inputs)
@@ -205,7 +205,20 @@ def segment_img(img, model='facebook/mask2former-swin-base-coco-panoptic'):
     label = model.config.id2label[segment['label_id']]
     # print(prediction.keys())
     return prediction['segmentation'], segment['id'], label
-      
+
+def init_model():
+    model_name = 'facebook/mask2former-swin-base-coco-panoptic'
+    from transformers import AutoImageProcessor, Mask2FormerForUniversalSegmentation
+    global MODEL
+    model = MODEL.get('model', None)
+    processor = MODEL.get('processor', None)
+    if model is None:
+        model = Mask2FormerForUniversalSegmentation.from_pretrained(model_name)
+        MODEL['model'] = model
+    if processor is None:
+        processor = AutoImageProcessor.from_pretrained(model_name)
+        MODEL['processor'] = processor
+    return processor, model
       
 if __name__ == '__main__':
     # fgs_dict = {

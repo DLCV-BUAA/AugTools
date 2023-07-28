@@ -79,18 +79,28 @@ if __name__ == '__main__':
     from augtools.img.transforms.blur.Contrast import Contrast
     import torchvision.transforms as transforms
     from augtools.utils.test_utils import show_image_by_tensor
+    from augtools.img.synthesis.synthesis_transform import SynthesisTransform
 
     dataset = ImageFolder(root=r'../extensions/resource/img/foreground', transform=transforms.ToTensor())
     sampler = LabelSampler(
         dataset,
-        label=[0, 1, 2],
+        label=[0, 3],
         num_per_label=1,
-        num_transforms_per_instance=3,
+        num_transforms_per_instance=5,
     )
+    # transform = [
+    #     SynthesisTransform(rotation=0),
+    #     SynthesisTransform(rotation=10),
+    #     SynthesisTransform(rotation=20),
+    #     SynthesisTransform(rotation=30),
+    #     SynthesisTransform(rotation=40),
+    # ]
     transform = [
-        Brightness(always_apply=True),
-        FogBlur(always_apply=True),
-        Contrast(always_apply=True),
+        Brightness(),
+        FogBlur(),
+        Contrast(),
+        SynthesisTransform(coords=(0.3, 0.3), area=0.5),
+        SynthesisTransform(coords=(0.6, 0.6), area=0.5),
     ]
     data_scheduler = DataScheduler(
         dataset,
