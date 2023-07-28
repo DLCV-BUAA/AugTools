@@ -52,10 +52,17 @@ class BasicTransform:
             
             kwargs, rs = self._pre_process_x(**kwargs, rs=rs) # 对数据进行处理
             kwargs, rs = self._pre_process_y(**kwargs, rs=rs) # 一般不处理？
+
+            '''
+            print("kwargs' value is as follows\n")
+            print(kwargs)
+            print("rs' value is as follows\n")
+            print(rs)
+            '''
             
             kwargs, rs = self._compute_x(**kwargs, rs=rs)        # 是一个确定性的操作，对输入是Tensor或者array的数据进行变换，输出是Tensor或者array的数据
             kwargs, rs = self._compute_y(**kwargs, rs=rs)
-            
+
             kwargs, rs = self._post_process_x(**kwargs, rs=rs)     # 后处理，对资源进行释放，将Tensor或者array的数据按照要求进行还原
             kwargs, rs = self._post_process_y(**kwargs, rs=rs)
 

@@ -38,7 +38,7 @@ class LambadaSentTransform(SentenceTransform):
 
     """
 
-    def __init__(self, model_dir, treshold=None, device='cpu', action='insert',repetition_penalty=1.0,
+    def __init__(self, model_dir, treshold=0.7, device='cpu', action='insert',repetition_penalty=1.0,
         min_length=100, max_length=300, batch_size=16, temperature=1.0, top_k=50, top_p=0.9,):
         super().__init__(
             action=action, device=device)
@@ -51,6 +51,8 @@ class LambadaSentTransform(SentenceTransform):
         self.top_k = top_k
         self.top_p = top_p
 
+        self.repetition_penalty = repetition_penalty
+        self.threshhold = treshold
         self.model_dir = model_dir
 
         with open(os.path.join(model_dir, 'label_encoder.json')) as json_file:
@@ -95,7 +97,7 @@ class LambadaSentTransform(SentenceTransform):
     
 if __name__ == '__main__':
     text = 'it is easy to say something but hard to do'
-    random_transform = AbstSummSentTransform()
+    random_transform = LambadaSentTransform()
     tran = random_transform(text=text,force_apply=True,n=1)
     print(text)
     print(tran['text']) 
