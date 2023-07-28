@@ -184,12 +184,15 @@ class LanguageModels(BaseModel):
         check_top_k = False
         check_top_p = False
 
+        '''
+        #此处代码有bug但不懂应该怎么改
         if top_k is not None and 0 < top_k < len(logits):
             logits, idxes = filtering.filter_top_k(logits, top_k, replace=-float('Inf'))
             check_top_k = True
         if top_p is not None and 0 < top_p < 1:
             logits, idxes = filtering.nucleus_sampling(logits, top_p)
             check_top_p = True
+        '''
 
         # If top_p is not None, value will be sorted, so no need to select it again
         if not check_top_p:

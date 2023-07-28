@@ -113,7 +113,6 @@ class Summarization(LanguageModels):
    
 if __name__ == "__main__":
     
-
     model = Summarization()
     print(model(['it is easy to say something but hard to do']))
 

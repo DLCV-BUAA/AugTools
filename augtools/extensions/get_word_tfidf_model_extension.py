@@ -1,6 +1,10 @@
 from augtools.extensions.extension import Extension
 from augtools.utils.file_utils import *
 from augtools.utils.text_model_utils import WordStatistics
+from augtools.text.transforms.utils.token import Tokenizer
+import numpy as np
+import math
+from nltk.corpus import brown
 
 class GetWordTFIDFModelExtension(Extension):
     def __init__(self, 
@@ -34,11 +38,16 @@ class TFIDF(WordStatistics):
         self.w2tfidf = {}
 
         if model_path:
+            lib_dir = os.path.dirname(augtools.__file__)
+            #print(lib_dir)
+            model_path = os.path.join(lib_dir, model_path)
             self.read(model_path)
+        
+        #print(model_path)
         self.normalize = normalize
 
     
-    def _predict_word(self, data):
+    def _predict_word(self, data, top_k=20):
         target_idxes = self.choice(self.tokens, p=self.tfidf_scores, size=top_k)
         target_words = [self.tokens[i] for i in target_idxes]
         return target_words
@@ -147,8 +156,12 @@ class TFIDF(WordStatistics):
         
     
 if __name__ == "__main__":
-    
     extension = GetWordTFIDFModelExtension()
+    train_text = list(brown.sents(categories=["news"]))
+    extension.model.train(train_text)
+    extension.model.save(".\\resource")
+    '''
     rs = None
     rs = extension(rs)
     print(rs['model']('apple'))
+    '''

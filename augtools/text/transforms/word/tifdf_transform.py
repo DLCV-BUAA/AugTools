@@ -38,7 +38,7 @@ class TfIdfTransform(WordTransform):
     :param str name: Name of this augmenter
     """
 
-    def __init__(self, model_path='.', action='SUBSTITUTE', aug_min=1, aug_max=10, aug_p=0.3, top_k=5, stopwords=None,
+    def __init__(self, model_path="extensions\\resource", action='SUBSTITUTE', aug_min=1, aug_max=10, aug_p=0.3, top_k=5, stopwords=None,
                  tokenizer=None, reverse_tokenizer=None, stopwords_regex=None):
         super().__init__(
             action=action, aug_p=aug_p, aug_min=aug_min, aug_max=aug_max, stopwords=stopwords,
@@ -46,12 +46,13 @@ class TfIdfTransform(WordTransform):
             stopwords_regex=stopwords_regex)
         self.model_path = model_path
         self.top_k = top_k
+        self.prob = random.random
 
         
     def _append_extensions(self):
         
         return [
-            GetWordTFIDFModelExtension()
+            GetWordTFIDFModelExtension(model_path=self.model_path)
         ]
 
 
@@ -85,6 +86,7 @@ class TfIdfTransform(WordTransform):
         for _ in range(retry_cnt):
             for i, p in zip(possible_idxes, aug_probs):
                 if self.prob() < p:
+                    print(self.prob)
                     aug_idxes.append(i)
                     possible_idxes.remove(i)
 
@@ -99,7 +101,7 @@ class TfIdfTransform(WordTransform):
 
         return aug_idxes
 
-    def insert(self, data):
+    def insert(self, data, rs=None):
         if not data or not data.strip():
             return data
 
@@ -152,3 +154,9 @@ class TfIdfTransform(WordTransform):
     def _post_process(self, augmented_tokens):
         return self.reverse_tokenizer(augmented_tokens)
 
+if __name__ == '__main__':
+    text = 'i eat an apple and hit someone'
+    tfidf_transform = TfIdfTransform(action='insert')
+    tran = tfidf_transform(text=text,force_apply=True,n=3)
+    print(text)
+    print(tran['text']) 

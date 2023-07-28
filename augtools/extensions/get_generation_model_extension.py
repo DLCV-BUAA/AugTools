@@ -24,7 +24,7 @@ class GetGenerationModelExtension(Extension):
         method='sentence'):
         
         
-        self.model = Summarization(
+        self.model = Generation(
             model_path=model_path, 
             min_length=min_length, 
             device=device, 
