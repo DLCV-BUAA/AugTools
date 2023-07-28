@@ -1,6 +1,8 @@
 import torch
+from torchvision import transforms
 import re
 import collections
+import numpy as np
 
 from augtools.core.transforms import BasicTransform
 from augtools.core.compose import BaseCompose
@@ -27,6 +29,9 @@ class Collection:
                 # print(batch, 'is_x:', is_x)
                 if self.transforms is not None:
                     batch = [transform(item) for item, transform in zip(batch, self.transforms)]
+                if isinstance(batch[0], np.ndarray):
+                    to_tensor = transforms.ToTensor()
+                    batch = [to_tensor(item) for item in batch]
             if torch.utils.data.get_worker_info() is not None:
                 # If we're in a background process, concatenate directly into a
                 # shared memory tensor to avoid an extra copy

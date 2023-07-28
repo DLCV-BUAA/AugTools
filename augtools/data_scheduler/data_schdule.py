@@ -70,23 +70,27 @@ class DataScheduler:
         return next(self.data_loader)
 
 
-
 if __name__ == '__main__':
     from augtools.data_scheduler.data_samplers.label_sampler import LabelSampler
     from torchvision.datasets import ImageFolder
     from augtools.img.transforms.blur.Brightness import Brightness
     from augtools.img.transforms.blur.Fog import FogBlur
+    # from augtools.img.transforms.blur.ZoomBlur import ZoomBlur
+    from augtools.img.transforms.blur.Contrast import Contrast
     import torchvision.transforms as transforms
+    from augtools.utils.test_utils import show_image_by_tensor
+
     dataset = ImageFolder(root=r'../extensions/resource/img/foreground', transform=transforms.ToTensor())
     sampler = LabelSampler(
         dataset,
-        label=0,
+        label=[0, 1, 2],
         num_per_label=1,
-        num_transforms_per_instance=2,
+        num_transforms_per_instance=3,
     )
     transform = [
         Brightness(always_apply=True),
-        FogBlur(always_apply=True)
+        FogBlur(always_apply=True),
+        Contrast(always_apply=True),
     ]
     data_scheduler = DataScheduler(
         dataset,
@@ -95,4 +99,5 @@ if __name__ == '__main__':
         transform=transform
     )
     for i, item in enumerate(data_scheduler):
-        print(i, item)
+        print(i)
+        show_image_by_tensor(item[0][0])

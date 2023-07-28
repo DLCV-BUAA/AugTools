@@ -26,11 +26,20 @@ def show_image(image):
 def show_image_by_tensor(tensor_image):
     import numpy as np
     from PIL import Image
-    # image_array = tensor_image.cpu().numpy()
-    # image_array = image_array.astype(np.uint8)
-    image = Image.fromarray(tensor_image)
+    from torchvision import transforms
+    # print(tensor_image.shape)
+    to_pil = transforms.ToPILImage()
+    tensor_image = to_pil(tensor_image)
+    # print(tensor_image.shape)
+    # image = Image.fromarray(tensor_image)
     # 展示图片
-    image.show()
+    # tensor_image.show()
+
+    image = np.array(tensor_image)
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    cv2.imshow('Image', image)
+    # 等待按下任意键
+    cv2.waitKey(0)
 
 
 if __name__ == '__main__':

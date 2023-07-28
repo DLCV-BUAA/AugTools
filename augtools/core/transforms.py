@@ -98,9 +98,9 @@ class BasicTransform:
         """
         for key in rs['x']:
             if kwargs[key] is not None:
-                if self.return_type is not None:
-                    if self.return_type == 'pt':
-                        kwargs[key] = torch.tensor(kwargs[key])
+                # if self.return_type is not None:
+                #     if self.return_type == 'pt':
+                #         kwargs[key] = torch.tensor(kwargs[key])
                 func_key = 'pre_process_' + key
                 target_function = self._pre_process_function_x_select.get(func_key, None)
                 if target_function is not None:
@@ -125,9 +125,9 @@ class BasicTransform:
         """
         for key in rs['y']:
             if kwargs[key] is not None:
-                if self.return_type is not None:
-                    if self.return_type == 'pt':
-                        kwargs[key] = torch.tensor(kwargs[key])
+                # if self.return_type is not None:
+                #     if self.return_type == 'pt':
+                #         kwargs[key] = torch.tensor(kwargs[key])
                 func_key = 'pre_process_' + key
                 target_function = self._pre_process_function_y_select.get(func_key, None)
                 if target_function is not None:
@@ -161,12 +161,12 @@ class BasicTransform:
         """
         for key in rs['x']:
             if kwargs[key] is not None:
-                if self.return_type is not None:
-                    if self.return_type == 'pt':
-                        if isinstance(kwargs[key], list):
-                            kwargs[key] = [torch.tensor(item) for item in kwargs[key]]
-                        else:
-                            kwargs[key] = torch.tensor(kwargs[key])
+                # if self.return_type is not None:
+                #     if self.return_type == 'pt':
+                #         if isinstance(kwargs[key], list):
+                #             kwargs[key] = [torch.tensor(item) for item in kwargs[key]]
+                #         else:
+                #             kwargs[key] = torch.tensor(kwargs[key])
                 if isinstance(kwargs[key], list) and len(kwargs[key]) == 1:
                     kwargs[key] = kwargs[key][0]
 

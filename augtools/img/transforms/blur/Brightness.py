@@ -17,7 +17,6 @@ class Brightness(ImageTransform):
         c = [.1, .2, .3, .4, .5][self.severity - 1]
 
         x = np.array(x) / 255.
-        print(x.shape)
         x = sk.color.rgb2hsv(x)
         x[:, :, 2] = np.clip(x[:, :, 2] + c, 0, 1)
         x = sk.color.hsv2rgb(x)
@@ -35,10 +34,10 @@ if __name__ == '__main__':
     image = prefix + 'test.jpg'
 
     img = read_image(image)
-    print(type(img))
-    print(img.shape)
+    # print(img)
+
     transform = Brightness()
     result = transform(img=img, force_apply=True)
-    print(type(result['img']))
-    # print(result['img'].shape)
-    show_image_by_tensor(result['img'])
+    # print(result['img'])
+
+    show_image(result['img'])

@@ -190,4 +190,7 @@ class Lambda(LanguageModels):
         if self.threshold:
             return self._filter(generated_texts)
         return generated_texts
+    
+if __name__ == '__main__':
+    Lambda()
 
