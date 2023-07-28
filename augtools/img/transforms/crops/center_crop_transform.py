@@ -1,10 +1,7 @@
 from augtools.img.transform import DualTransform
-from augtools.img.transforms.utils.img_utils import *
-import skimage as sk
 import random
-from typing_extensions import Concatenate, ParamSpec
-import math
-import functional as F
+import augtools.img.functional as F
+import albumentations as A
 
 
 class CenterCrop(DualTransform):
@@ -23,8 +20,6 @@ class CenterCrop(DualTransform):
 
     Note:
         It is recommended to use uint8 images as input.
-        Otherwise the operation will require internal conversion
-        float32 -> uint8 -> float32 that causes worse performance.
     """
 
     def __init__(self, height, width, always_apply=False, p=1.0):
@@ -42,10 +37,16 @@ class CenterCrop(DualTransform):
             res["img"] = F.center_crop(kwargs["img"], self.height, self.width)
 
         if "bbox" in kwargs:
-            res["bbox"] = F.bbox_center_crop(kwargs["bbox"], self.height, self.width, h, w)
+            bboxes = []
+            for item in kwargs["bbox"]:
+                bboxes.append(F.bbox_center_crop(item, self.height, self.width, h, w))
+            res["bbox"] = bboxes
 
         if "keypoint" in kwargs:
-            res["keypoint"] = F.keypoint_center_crop(kwargs["keypoint"], self.height, self.width, h, w)
+            points = []
+            for item in kwargs["keypoint"]:
+                points.append(F.keypoint_center_crop(item, self.height, self.width, h, w))
+            res["keypoint"] = points
 
         return res
 
@@ -57,11 +58,14 @@ if __name__ == '__main__':
     image = prefix + 'test.jpg'
 
     img = read_image(image)
-    # print(img)
-    bbox = (50, 60, 50, 80)
+    bbox = [(30, 170, 230, 300)]
+    keypoint = [(230, 80, 1, 1)]
 
-    transform = CenterCrop(100, 100)
-    result = transform(img=img, force_apply=True, bbox=bbox)
-    # print(result['img'])
-    print(result["bbox"])
-    show_image(result['img'])
+    transform = CenterCrop(300, 350)
+    re = transform(img=img, force_apply=True, bbox=bbox, keypoint=keypoint)
+    show_bbox_keypoint_image(img, bbox=bbox, keypoint=keypoint)
+
+    cc = A.CenterCrop(300, 350, always_apply=True)
+    result = cc(image=img, bboxes=bbox, keypoints=keypoint)
+    show_bbox_keypoint_image(re['img'], bbox=re['bbox'], keypoint=re['keypoint'])
+    show_bbox_keypoint_image(result['image'], bbox=result['bboxes'], keypoint=result['keypoints'])

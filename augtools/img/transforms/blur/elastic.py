@@ -1,16 +1,15 @@
 from augtools.img.transform import ImageTransform
 from augtools.img.transforms.utils.img_utils import *
-import skimage as sk
 from skimage.filters import gaussian
 from scipy.ndimage.interpolation import map_coordinates
 
 
 class Elastic(ImageTransform):
     def __init__(
-        self,
-        always_apply: bool = False,
-        p: float = 0.5,
-        severity = 1,
+            self,
+            always_apply: bool = False,
+            p: float = 0.5,
+            severity: int = 1,
     ):
         super().__init__(always_apply=always_apply, p=p)
         self.severity = severity

@@ -10,7 +10,7 @@ class FrostBlur(ImageTransform):
         self,
         always_apply: bool = False,
         p: float = 0.5,
-        severity = 1,
+        severity: int = 1,
     ):
         super().__init__(always_apply=always_apply, p=p)
         self.severity = severity
@@ -22,8 +22,10 @@ class FrostBlur(ImageTransform):
              (0.7, 0.7),
              (0.65, 0.7),
              (0.6, 0.75)][self.severity - 1]
+
         idx = np.random.randint(5)
-        filename = ['./FrostResource/frost1.png', './FrostResource/frost2.png', './FrostResource/frost3.png', './FrostResource/frost4.jpg', './FrostResource/frost5.jpg', './FrostResource/frost6.jpg'][idx]
+        filename = ['./FrostResource/frost1.png', './FrostResource/frost2.png', './FrostResource/frost3.png',
+                    './FrostResource/frost4.jpg', './FrostResource/frost5.jpg', './FrostResource/frost6.jpg'][idx]
         frost = cv2.imread(filename)
 
         # randomly crop and convert to rgb
