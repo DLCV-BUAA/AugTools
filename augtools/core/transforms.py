@@ -6,8 +6,10 @@ from warnings import warn
 
 import cv2
 import numpy as np
+import torch
 
 from augtools.utils.decorator import lists_process
+
 # from .serialization import Serializable, get_shortest_class_fullname
 # from .utils import format_args
 
@@ -26,7 +28,6 @@ from augtools.utils.decorator import lists_process
 params: 对当前augment的设置
 """
 
-
 """
 1. 准备处理数据，对数据进行变换（读图片，转换图片，处理pytorch数据，）  ===》 nparray的数据
     准备计算所需的资源
@@ -38,29 +39,45 @@ params: 对当前augment的设置
 思考：组合形式资源如何重复利用
 """
 
+
 class BasicTransform:
 
-    def __init__(self, always_apply: bool = False, p: float = 0.5):
+    def __init__(self, always_apply: bool = False, p: float = 0.5, return_type=None):
         self.p = p
         self.always_apply = always_apply
+        self.return_type = return_type
 
-
-    def __call__(self, *args, force_apply: bool = False, **kwargs) -> Dict[str, Any]:
-
+    def __call__(self, x=None, y=None, xy=None, *args, force_apply: bool = False, **kwargs):
+        if x is not None:
+            kwargs['x'] = x
+        if y is not None:
+            kwargs['y'] = y
+        if xy is not None:
+            if isinstance(xy, tuple):
+                if len(xy) == 1:
+                    kwargs['x'] = xy[0]
+                else:
+                    kwargs['x'] = xy[0]
+                    kwargs['y'] = xy[1:]
         if (random.random() < self.p) or self.always_apply or force_apply:
-            rs = self._prepare_rs(**kwargs)   # 准备计算所需要的资源       输出是字典形式，计算时可以通过params['name']获取
-            
-            kwargs, rs = self._pre_process_x(**kwargs, rs=rs) # 对数据进行处理
-            kwargs, rs = self._pre_process_y(**kwargs, rs=rs) # 一般不处理？
+            rs = self._prepare_rs(**kwargs)  # 准备计算所需要的资源       输出是字典形式，计算时可以通过params['name']获取
 
-            kwargs, rs = self._compute_x(**kwargs, rs=rs)        # 是一个确定性的操作，对输入是Tensor或者array的数据进行变换，输出是Tensor或者array的数据
+            kwargs, rs = self._pre_process_x(**kwargs, rs=rs)  # 对数据进行处理
+            kwargs, rs = self._pre_process_y(**kwargs, rs=rs)  # 一般不处理？
+
+            kwargs, rs = self._compute_x(**kwargs, rs=rs)  # 是一个确定性的操作，对输入是Tensor或者array的数据进行变换，输出是Tensor或者array的数据
             kwargs, rs = self._compute_y(**kwargs, rs=rs)
-            
-            kwargs, rs = self._post_process_x(**kwargs, rs=rs)     # 后处理，对资源进行释放，将Tensor或者array的数据按照要求进行还原
-            kwargs, rs = self._post_process_y(**kwargs, rs=rs)
 
+            kwargs, rs = self._post_process_x(**kwargs, rs=rs)  # 后处理，对资源进行释放，将Tensor或者array的数据按照要求进行还原
+            kwargs, rs = self._post_process_y(**kwargs, rs=rs)
+        if x is not None and y is not None:
+            return kwargs['x'], kwargs['y']
+        elif xy is not None and len(xy) > 1:
+            return kwargs['x'], kwargs['y']
+        elif xy is not None or x is not None:
+            return kwargs['x']
         return kwargs
-    
+
     def _prepare_rs(self, **kwargs):
         """
             获取计算所需要的资源，例如图片宽高，或者背景等等
@@ -72,7 +89,7 @@ class BasicTransform:
         for ext in exts:
             rs = ext(rs, **kwargs)
         return rs
-    
+
     def _pre_process_x(self, rs=None, **kwargs):
         """
             对数据进行前处理，对nlp来说，处理分词或者去除停用词等等，对图像来说，将图像转换为Tensor数据等等
@@ -81,22 +98,25 @@ class BasicTransform:
         """
         for key in rs['x']:
             if kwargs[key] is not None:
+                if self.return_type is not None:
+                    if self.return_type == 'pt':
+                        kwargs[key] = torch.tensor(kwargs[key])
                 func_key = 'pre_process_' + key
                 target_function = self._pre_process_function_x_select.get(func_key, None)
                 if target_function is not None:
-                    kwargs[key], rs = target_function(kwargs[key], rs)   
+                    kwargs[key], rs = target_function(kwargs[key], rs)
         return kwargs, rs
-    
+
     @property
     def _pre_process_function_x_select(self):
         return {
         }
-        
+
     @property
     def _pre_process_function_y_select(self):
         return {
         }
-    
+
     def _pre_process_y(self, rs=None, **kwargs):
         """
             对数据进行前处理，对图像来说，将图像转换为统一的格式等等
@@ -105,12 +125,15 @@ class BasicTransform:
         """
         for key in rs['y']:
             if kwargs[key] is not None:
+                if self.return_type is not None:
+                    if self.return_type == 'pt':
+                        kwargs[key] = torch.tensor(kwargs[key])
                 func_key = 'pre_process_' + key
                 target_function = self._pre_process_function_y_select.get(func_key, None)
                 if target_function is not None:
-                    kwargs[key], rs = target_function(kwargs[key], rs) 
+                    kwargs[key], rs = target_function(kwargs[key], rs)
         return kwargs, rs
-        
+
     def _compute_x(self, rs=None, **kwargs):
         """
             根据已经获取得到的资源，对数据进行处理
@@ -118,16 +141,16 @@ class BasicTransform:
             处理后的结果
         """
         return kwargs, rs
-        
-    def _compute_y(self, rs=None,  **kwargs):
+
+    def _compute_y(self, rs=None, **kwargs):
         """
             根据已经获取得到的资源，对数据进行处理
         Returns:
             处理后的结果
         """
         return kwargs, rs
-        
-    def _post_process_x(self, rs=None,  **kwargs):
+
+    def _post_process_x(self, rs=None, **kwargs):
         """
             对数据进行后处理，对图像来说，将图像转换为统一的格式等等
             
@@ -136,19 +159,29 @@ class BasicTransform:
         Returns:
             _type_: _description_
         """
-        
+        for key in rs['x']:
+            if kwargs[key] is not None:
+                if self.return_type is not None:
+                    if self.return_type == 'pt':
+                        if isinstance(kwargs[key], list):
+                            kwargs[key] = [torch.tensor(item) for item in kwargs[key]]
+                        else:
+                            kwargs[key] = torch.tensor(kwargs[key])
+                if isinstance(kwargs[key], list) and len(kwargs[key]) == 1:
+                    kwargs[key] = kwargs[key][0]
+
         return kwargs, rs
-    
-    def _post_process_y(self, rs=None,  **kwargs):
+
+    def _post_process_y(self, rs=None, **kwargs):
         """
             对数据进行后处理，对图像来说，将图像转换为统一的格式等等
             实现：可能是rs里面存放一系列的undo操作的函数，这个函数里面只是依次执行rs的undo操作以及内存回收操作
         Returns:
             _type_: _description_
         """
-        
+
         return kwargs, rs
-    
+
     def _extension(self):
         """_summary_
             用来存放获取资源的函数项，每个函数项完成一个单独的操作，函数项可能有前后依赖关系
@@ -161,31 +194,13 @@ class BasicTransform:
         """
         # extensions = defaultdict(list)
         # extensions['x'] = [
-            
+
         # ]
         # extensions['y'] = [
-            
+
         # ]
         extensions = []
         return extensions
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 # class DualTransform(BasicTransform):
 #     """Transform for segmentation task."""

@@ -28,22 +28,21 @@ class AntonymTransform(SynonmyTransform):
     """
 
     def __init__(self, aug_min=1, aug_max=10, aug_p=0.3, lang='eng', aug_src='wordnet',
-                 stopwords=None, tokenizer=None, reverse_tokenizer=None, stopwords_regex=None, 
-                ):
+                 stopwords=None, tokenizer=None, reverse_tokenizer=None, stopwords_regex=None,
+                 ):
         super().__init__(
             aug_p=aug_p, aug_min=aug_min, aug_max=aug_max, stopwords=stopwords, lang=lang, aug_src=aug_src,
             tokenizer=tokenizer, reverse_tokenizer=reverse_tokenizer, stopwords_regex=stopwords_regex)
-
-
 
     def _append_extensions(self):
         return [
             GetWordDcitModelExtension(name=self.aug_src, lang=self.lang, is_synonym=False, method='word'),
         ]
 
+
 if __name__ == '__main__':
     text = 'i eat an apple and hit someone'
     syno_transform = AntonymTransform()
-    tran = syno_transform(text=text,force_apply=True,n=3)
+    tran = syno_transform(text=text, force_apply=True, n=3)
     print(text)
-    print(tran['text'])   
+    print(tran['text'])

@@ -9,6 +9,7 @@ def read_image(filepath):
     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
     return image
 
+
 def show_image(image):
     # plt.figure(figsize=(10, 10))
     # plt.axis('off')
@@ -20,8 +21,18 @@ def show_image(image):
     # 关闭窗口
     cv2.destroyAllWindows()
     # plt.imshow(image)
-    
-    
+
+
+def show_image_by_tensor(tensor_image):
+    import numpy as np
+    from PIL import Image
+    # image_array = tensor_image.cpu().numpy()
+    # image_array = image_array.astype(np.uint8)
+    image = Image.fromarray(tensor_image)
+    # 展示图片
+    image.show()
+
+
 if __name__ == '__main__':
     filepath = r'F:/dog.jpg'
     img = read_image(filepath)
