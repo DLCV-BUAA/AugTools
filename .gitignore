@@ -67,4 +67,6 @@ demo/*
 
 __pycache__/*
 
-
+augtools/extensions/resource/text/word/glove/*
+augtools/extensions/resource/text/word/fasttext/*
+augtools/extensions/resource/text/word/word2vec/*

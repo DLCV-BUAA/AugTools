@@ -4,3 +4,17 @@
 3. conda install pytorch torchvision torchaudio pytorch-cuda=11.7 -c pytorch -c nvidia
 4. pip install opencv-python
 5. pip install numpy matplotlib
+6. pip install gdown
+7. pip install nltk
+    可能需要自己单独下载nltk的数据文件
+8. pip install gensim
+9. pip install transforms   # lang model 第一次加载可能会失败，需要第二次下载模型重新运行
+10. pip install sacremoses
+
+
+
+todo:
+    1. add get_lambda_model_extension and add lambda model to get_sentence_model_extension and fix bug
+    2. train a tifdf model and test text/transforms/word/tifdf_transform.py and fix bug
+    3. test text/transforms/word/reserved_transform.py and fix bug
+    4. 使用不是word/context_word_embs_trnasform、sentence/abst_summ_transform里面默认模型的其他模型测试一下代码准确性

@@ -13,13 +13,14 @@ class GetImageTargetExtension(Extension):
                 rs['y'].append(key)
         return rs
     
-# class GetTextTargetExtension(Extension):
-#     def _get_rs(self, rs, **kwargs):
-#         for key, arg in kwargs.items():
-#             if key in ['image', 'img', 'x']:
-#                 rs['rows'] = arg.shape[0]
-#                 rs['cols'] = arg.shape[1]
-#         return rs
+class GetTextTargetExtension(Extension):
+    def _get_rs(self, rs, **kwargs):
+        for key, arg in kwargs.items():
+            if key in ['text', 'x']:
+                if rs.get('x', None) is None:
+                    rs['x'] = []
+                rs['x'].append(key)
+        return rs
     
     
 if __name__ == "__main__":
@@ -34,3 +35,5 @@ if __name__ == "__main__":
     rs = defaultdict(dict)
     rs = extension(rs, **dicts)
     print(rs)
+    
+   

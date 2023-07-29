@@ -21,26 +21,29 @@ def show_image(image):
     cv2.destroyAllWindows()
     # plt.imshow(image)
 
+def show_image_by_tensor(tensor_image):
+    import numpy as np
+    from PIL import Image
+    from torchvision import transforms
+    # print(tensor_image.shape)
+    to_pil = transforms.ToPILImage()
+    tensor_image = to_pil(tensor_image)
+    # print(tensor_image.shape)
+    # image = Image.fromarray(tensor_image)
+    # 展示图片
+    # tensor_image.show()
 
-def show_bbox_keypoint_image(image, bbox, keypoint):
+    image = np.array(tensor_image)
+    image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+    cv2.imshow('Image', image)
+    # 等待按下任意键
+    cv2.waitKey(0)
+
+
+def show_bbox_keypoint_image(image, bbox=None, keypoint=None):
     image = copy.deepcopy(image)
     for item in bbox:
         x_min, y_min, x_max, y_max = int(item[0]), int(item[1]), int(item[2]), int(item[3])
-        # image[x_min - 1:x_min + 1, y_min:y_max, 0] = 0
-        # image[x_min - 1:x_min + 1, y_min:y_max, 1] = 255
-        # image[x_min - 1:x_min + 1, y_min:y_max, 2] = 0
-        #
-        # image[x_max - 1:x_max + 1, y_min:y_max, 0] = 0
-        # image[x_max - 1:x_max + 1, y_min:y_max, 1] = 255
-        # image[x_max - 1:x_max + 1, y_min:y_max, 2] = 0
-        #
-        # image[x_min:x_max, y_min - 1: y_min + 1, 0] = 0
-        # image[x_min:x_max, y_min - 1: y_min + 1, 1] = 255
-        # image[x_min:x_max, y_min - 1: y_min + 1, 2] = 0
-        #
-        # image[x_min:x_max, y_max - 1: y_max + 1, 0] = 0
-        # image[x_min:x_max, y_max - 1: y_max + 1, 1] = 255
-        # image[x_min:x_max, y_max - 1: y_max + 1, 2] = 0
         cv2.rectangle(image, (x_min, y_min), (x_max, y_max), color=(0, 255, 0))
 
     for item in keypoint:
