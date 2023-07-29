@@ -1,10 +1,7 @@
 from augtools.img.transform import DualTransform
-from augtools.img.transforms.utils.img_utils import *
-import skimage as sk
 import random
-from typing_extensions import Concatenate, ParamSpec
-import math
-import functional as F
+import augtools.img.functional as F
+import albumentations as A
 
 
 class Crop(DualTransform):
@@ -40,13 +37,19 @@ class Crop(DualTransform):
             res["img"] = F.crop(kwargs["img"], x_min=self.x_min, y_min=self.y_min, x_max=self.x_max, y_max=self.y_max)
 
         if "bbox" in kwargs:
-            res["bbox"] = F.bbox_crop(bbox, x_min=self.x_min, y_min=self.y_min, x_max=self.x_max, y_max=self.y_max, rows=h, cols=w)
+            bboxes = []
+            for item in kwargs["bbox"]:
+                bboxes.append(F.bbox_crop(item, x_min=self.x_min, y_min=self.y_min, x_max=self.x_max, y_max=self.y_max,
+                                          rows=h, cols=w))
+            res["bbox"] = bboxes
 
         if "keypoint" in kwargs:
-            res["keypoint"] = F.crop_keypoint_by_coords(kwargs["keypoint"], crop_coords=(self.x_min, self.y_min, self.x_max, self.y_max))
-
+            points = []
+            for item in kwargs["keypoint"]:
+                points.append(F.crop_keypoint_by_coords(item,
+                                                        crop_coords=(self.x_min, self.y_min, self.x_max, self.y_max)))
+            res["keypoint"] = points
         return res
-
 
 
 if __name__ == '__main__':
@@ -56,11 +59,13 @@ if __name__ == '__main__':
     image = prefix + 'test.jpg'
 
     img = read_image(image)
-    # print(img)
-    bbox = (50, 60, 50, 80)
+    bbox = [(30, 170, 230, 300)]
 
-    transform = Crop(100, 100)
-    result = transform(img=img, force_apply=True, bbox=bbox)
-    # print(result['img'])
-    print(result["bbox"])
-    show_image(result['img'])
+    transform = Crop(20, 240, 180, 310)
+    re = transform(img=img, force_apply=True, bbox=bbox)
+    show_bbox_keypoint_image(img, bbox=bbox, keypoint=None)
+
+    cc = A.Crop(20, 240, 180, 310, always_apply=True)
+    result = cc(image=img, bboxes=bbox)
+    show_bbox_keypoint_image(re['img'], bbox=re['bbox'], keypoint=None)
+    show_bbox_keypoint_image(result['image'], bbox=result['bboxes'], keypoint=None)

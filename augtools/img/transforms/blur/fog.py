@@ -1,6 +1,5 @@
 from augtools.img.transform import ImageTransform
 from augtools.img.transforms.utils.img_utils import *
-import skimage as sk
 
 
 def plasma_fractal(mapsize=256, wibbledecay=3):
@@ -54,16 +53,15 @@ def plasma_fractal(mapsize=256, wibbledecay=3):
 
 class FogBlur(ImageTransform):
     def __init__(
-        self,
-        always_apply: bool = False,
-        p: float = 0.5,
-        severity = 1,
+            self,
+            always_apply: bool = False,
+            p: float = 0.5,
+            severity: int = 1,
     ):
         super().__init__(always_apply=always_apply, p=p)
         self.severity = severity
 
     def _compute_x_function(self, x, rs=None):
-        # c 的操作就是 list[] 里面随便选一个
         c = [(1.5, 2), (2, 2), (2.5, 1.7), (2.5, 1.5), (3, 1.4)][self.severity - 1]
 
         x = np.array(x) / 255.

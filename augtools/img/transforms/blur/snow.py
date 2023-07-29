@@ -1,4 +1,3 @@
-
 from augtools.img.transform import ImageTransform
 from augtools.img.transforms.utils.img_utils import *
 from io import BytesIO
@@ -10,7 +9,7 @@ class Snow(ImageTransform):
         self,
         always_apply: bool = False,
         p: float = 0.5,
-        severity = 1,
+        severity: int = 1,
     ):
         super().__init__(always_apply=always_apply, p=p)
         self.severity = severity
@@ -20,7 +19,7 @@ class Snow(ImageTransform):
              (0.2, 0.3, 2, 0.5, 12, 4, 0.7),
              (0.55, 0.3, 4, 0.9, 12, 8, 0.7),
              (0.55, 0.3, 4.5, 0.85, 12, 8, 0.65),
-             (0.55, 0.3, 2.5, 0.85, 12, 12, 0.55)][severity - 1]
+             (0.55, 0.3, 2.5, 0.85, 12, 12, 0.55)][self.severity - 1]
 
         x = np.array(x, dtype=np.float32) / 255.
         snow_layer = np.random.normal(size=x.shape[:2], loc=c[0], scale=c[1])  # [:2] for monochrome
@@ -52,7 +51,7 @@ if __name__ == '__main__':
     img = read_image(image)
     # print(img)
 
-    transform = MotionBlur()
+    transform = Snow()
     result = transform(img=img, force_apply=True)
     print(result['img'])
 
