@@ -190,7 +190,7 @@ class ReservedTransform(WordTransform):
 
                 new_token = self.sample(candidate_tokens, 1)[0]
                 if aug_idx == 0:
-                    new_token = self.align_capitalization(original_token, new_token)
+                    new_token = self._align_capitalization(original_token, new_token)
 
                 augmented_tokens[aug_idx] = new_token
 
@@ -214,7 +214,8 @@ class ReservedTransform(WordTransform):
 
 if __name__ == '__main__':
     text = 'i eat an apple and hit someone'
-    random_transform = ReservedTransform()
+    random_transform = ReservedTransform(reserved_tokens=[['i', 'I'], ['eat', 'have', 'enjoy'], ['an', 'a small', 'a red'], 
+                                          ['and', 'then'], ['hit', 'run into', 'bump into'], ['someone', 'a person', 'somebody']])
     tran = random_transform(text=text,force_apply=True,n=3)
     print(text)
     print(tran['text'])   

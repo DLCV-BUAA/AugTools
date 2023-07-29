@@ -36,7 +36,7 @@ class AbstSummSentTransform(SentenceTransform):
 
     """
 
-    def __init__(self, model_path='t5-base', tokenizer_path='t5-base', device='cuda', action='substitute',
+    def __init__(self, model_path='sshleifer/distilbart-cnn-12-6', tokenizer_path='sshleifer/distilbart-cnn-12-6', device='cuda', action='substitute',
         min_length=20, max_length=50, batch_size=32, temperature=1.0, top_k=50, top_p=0.9,):
         super().__init__(
             action=action, device=device)
@@ -82,7 +82,7 @@ class AbstSummSentTransform(SentenceTransform):
         return rs['model'].predict(all_data)
 
 if __name__ == '__main__':
-    text = 'it is easy to say something but hard to do'
+    text = 'On the app itself, perplexed academic followers twittered among themselves as to which of its competitors might offer a substitute platform: Bluesky, perhaps, though it is still in development and you have to be invited to use it, or Mastodon, an early competitor, but which has fewer than 3 million, active users. Twitter does still have some cultural heft: last Tuesday the singer Labi Siffre used it to complain of a series of racist slights he had suffered during a visit to London.But in business terms Mr Musk’s rivals are circling. Just a day after the rebrand news, the video‑sharing platform TikTok responded with its own announcement that it was expanding into text‑only posts. '
     random_transform = AbstSummSentTransform()
     tran = random_transform(text=text,force_apply=True,n=1)
     print(text)

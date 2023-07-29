@@ -38,11 +38,11 @@ class LambadaSentTransform(SentenceTransform):
 
     """
 
-    def __init__(self, model_dir, treshold=0.7, device='cpu', action='insert',repetition_penalty=1.0,
+    def __init__(self, cls_model_dir, gen_model_dir, treshold=0.7, device='cpu', action='insert',repetition_penalty=1.0,
         min_length=100, max_length=300, batch_size=16, temperature=1.0, top_k=50, top_p=0.9,):
         super().__init__(
             action=action, device=device)
-        self.aug_src = 'lambda'
+        self.aug_src = 'lambada'
 
         self.min_length = min_length
         self.max_length = max_length
@@ -53,11 +53,11 @@ class LambadaSentTransform(SentenceTransform):
 
         self.repetition_penalty = repetition_penalty
         self.threshhold = treshold
-        self.model_dir = model_dir
+        self.cls_model_dir = cls_model_dir
+        self.gen_model_dir = gen_model_dir
 
-        with open(os.path.join(model_dir, 'label_encoder.json')) as json_file:
-            self.label2id = json.load(json_file)
-        
+        with open(os.path.join(cls_model_dir, 'label_encoder.json')) as json_file:
+            self.label2id = json.load(json_file)       
 
     def _append_extensions(self):
         return [

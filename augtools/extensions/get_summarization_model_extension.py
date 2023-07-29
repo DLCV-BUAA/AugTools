@@ -49,7 +49,7 @@ class Summarization(LanguageModels):
         tokenizer_name=None, 
         min_length=10, 
         device='cuda', 
-        max_length=20,
+        max_length=30,
         batch_size=32,
         temperature=1.0,
         top_k=50,
@@ -100,8 +100,8 @@ class Summarization(LanguageModels):
                     max_length=self.max_length,
                     temperature=self.temperature,
                     top_k=self.top_k,
-                    top_p=self.top_p,
-                    num_workers=1)
+                    top_p=self.top_p
+                    )
                 if isinstance(predict_result, list):
                     results.extend(predict_result)
                 else:
@@ -114,7 +114,7 @@ class Summarization(LanguageModels):
 if __name__ == "__main__":
     
     model = Summarization()
-    print(model(['it is easy to say something but hard to do']))
+    print(model(['On the app itself, perplexed academic followers twittered among themselves as to which of its competitors might offer a substitute platform: Bluesky, perhaps, though it is still in development and you have to be invited to use it, or Mastodon, an early competitor, but which has fewer than 3 million, active users. Twitter does still have some cultural heft: last Tuesday the singer Labi Siffre used it to complain of a series of racist slights he had suffered during a visit to London.But in business terms Mr Musk’s rivals are circling. Just a day after the rebrand news, the video‑sharing platform TikTok responded with its own announcement that it was expanding into text‑only posts.']))
 
 
 

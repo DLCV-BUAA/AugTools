@@ -22,7 +22,7 @@ class GetFMModelExtension(Extension):
         method='WORD'):
         
         
-        self.model = MtModels(
+        self.model = FMModels(
             model_path=model_path, 
             model_type=model_type, 
             top_k=top_k, 
@@ -77,6 +77,7 @@ class FMModels(LanguageModels):
 
     def get_tokenizer(self):
         return self.model.tokenizer
+        
 
     def get_model(self):
         return self.model.model
@@ -105,7 +106,7 @@ class FMModels(LanguageModels):
         predict_results = []
         with torch.no_grad():
             for i in range(0, len(texts), self.batch_size):
-                predict_result = self.model(texts[i:i+self.batch_size], num_workers=1)
+                predict_result = self.model(texts[i:i+self.batch_size])
                 if isinstance(predict_result, list) and len(predict_result) > 0:
                     if isinstance(predict_result[0], list):
                         predict_results.extend(predict_result)

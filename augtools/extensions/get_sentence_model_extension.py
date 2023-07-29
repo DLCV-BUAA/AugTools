@@ -4,7 +4,7 @@ from augtools.utils.text_model_utils import BaseModel
 from augtools.extensions.get_summarization_model_extension import Summarization
 from augtools.extensions.get_shuffle_model_extension import Shuffle
 from augtools.extensions.get_generation_model_extension import Generation
-from augtools.extensions.get_lambda_model_extension import Lambda
+from augtools.extensions.get_lambada_model_extension import Lambada
 
 class GetSentenceModelExtension(Extension):
     def __init__(self, name='shuffle', *arg, **kwargs):
@@ -18,7 +18,7 @@ class GetSentenceModelExtension(Extension):
             'shuffle': Shuffle,
             'summarization':Summarization,
             'generation': Generation,
-            'lambda': Lambda,
+            'lambada': Lambada,
 
         }.get(name, None)
     
