@@ -46,14 +46,21 @@ class ContextualWordEmbsTransform(WordTransform):
     :param bool silence: Default is True. transformers library will print out warning message when leveraing
         pre-trained model. Set True to disable the expected warning message.
     :param str name: Name of this augmenter
+    :param language: Indicate the language the augmenting text belongs to
+    :param normal: English LM all obey the normal rules defined in class LanguageModels, but Chinese LM and Multi-Language LM usually 
+        don't follow the rules, when not, param prefix and param all are supposed to be set manually
+    :param prefix: prefix the model employs
+    :param mask_token: mask_token the model employs
+    :param all: if the prefix is applied to all tokens, set param all True; elif the prefix is only added to the first token,
+        set param all False
 
     >>> import nlpaug.augmenter.word as naw
     >>> aug = naw.ContextualWordEmbsAug()
     """
 
-    def __init__(self, model_path='distilbert-base-uncased', model_type='bert', action="substitute", top_k=100, 
+    def __init__(self, model_path='roberta-base', model_type='roberta', action="substitute", top_k=20, 
                  aug_min=1, aug_max=10, aug_p=0.3, stopwords=None,
-                 batch_size=32, device='cpu', stopwords_regex=None):
+                 batch_size=32, device='cpu', stopwords_regex=None, language="en", normal=True, prefix=None, mask_token=None, all=True):
         super().__init__(
             action=action, aug_p=aug_p, aug_min=aug_min, aug_max=aug_max, tokenizer=None,
             stopwords=stopwords, stopwords_regex=stopwords_regex,)
@@ -71,6 +78,11 @@ class ContextualWordEmbsTransform(WordTransform):
         self.stopword_reg = None
         self.reserve_word_reg = None
         self._build_stop_words(stopwords)
+        self.language = language
+        self.normal = normal
+        self.prefix = prefix
+        self.mask_token = mask_token
+        self.all = all
 
 
     def _build_stop_words(self, stopwords, model=None):
@@ -92,7 +104,10 @@ class ContextualWordEmbsTransform(WordTransform):
                 top_k=self.top_k, 
                 device=self.device, 
                 batch_size=self.batch_size ,
-                method='word'),
+                method='word',
+                normal=self.normal,
+                prefix=self.prefix,
+                ),
         ]
 
     def check_model_type(self):
@@ -135,28 +150,42 @@ class ContextualWordEmbsTransform(WordTransform):
 
     def _skip_aug(self, token_idxes, tokens, model=None):
         results = []
+        #print(tokens)
+        if self.normal:
+            for token_idx in token_idxes:
+                token = tokens[token_idx]
 
-        for token_idx in token_idxes:
-            token = tokens[token_idx]
-
-            # Do not augment subword
-            if self.model_type in ['bert', 'electra'] \
-                and token.startswith(model.get_subword_prefix()):
-                continue
-            # Do not augment tokens if len is less than aug_min
-            if (model.get_subword_prefix() in token and len(token) < self.aug_min+1) \
-                or (model.get_subword_prefix() not in token and len(token) < self.aug_min):
-                continue
-            if self.model_type in ['xlnet', 'roberta', 'bart']:
-                # xlent may tokenize word incorrectly. For example, 'fox', will be tokeinzed as ['_', 'fox']
-                if token == model.get_subword_prefix():
+                # Do not augment subword
+                if self.model_type in ['bert', 'electra'] \
+                    and token.startswith(model.get_subword_prefix()):
                     continue
-
-                # subword
-                if not token.startswith(model.get_subword_prefix()):
+                # Do not augment tokens if len is less than aug_min
+                if (model.get_subword_prefix() in token and len(token) < self.aug_min+1) \
+                    or (model.get_subword_prefix() not in token and len(token) < self.aug_min):
                     continue
+                if self.model_type in ['xlnet', 'roberta', 'bart']:
+                    # xlent may tokenize word incorrectly. For example, 'fox', will be tokeinzed as ['_', 'fox']
+                    if token == model.get_subword_prefix():
+                        continue
 
-            results.append(token_idx)
+                    # subword
+                    if not token.startswith(model.get_subword_prefix()):
+                        continue
+
+                results.append(token_idx)
+        else:
+            if self.all:
+                for token_idx in token_idxes:
+                    token = tokens[token_idx]
+
+                    if token == self.prefix:
+                        continue
+
+                    if not token.startswith(self.prefix):
+                        continue
+                    results.append(token_idx)
+            else:
+                return token_idxes
 
         return results
 
@@ -168,6 +197,7 @@ class ContextualWordEmbsTransform(WordTransform):
         else:
             preprocessed_data, reserved_stopwords = data, None
         tokens = model.get_tokenizer().tokenize(preprocessed_data)
+        #print(tokens)
 
         if model.get_model().config.max_position_embeddings == -1:  # e.g. No max length restriction for XLNet
             return (preprocessed_data, None, tokens, None), reserved_stopwords  # (Head text, tail text, head token, tail token), reserved_stopwords
@@ -181,6 +211,7 @@ class ContextualWordEmbsTransform(WordTransform):
             ids = model.get_tokenizer().convert_tokens_to_ids(tokens[self.max_num_token:])
             tail_text = model.get_tokenizer().decode(ids).strip()
 
+        #print(head_text)
         return (head_text, tail_text, tokens[:self.max_num_token], tokens[self.max_num_token:]), reserved_stopwords
 
     def insert(self, data, rs=None):
@@ -189,35 +220,56 @@ class ContextualWordEmbsTransform(WordTransform):
         self.max_num_token = rs['model'].get_max_num_token()
         
         split_results, reserved_stopwords = self._pre_process(data, rs['model'])
+        #print(split_results[0])
+
+        if self.normal:
+            prefix = rs['model'].get_subword_prefix()
+        else:
+            prefix = self.prefix
         
         for i, (split_result, reserved_stopword_tokens) in enumerate(zip(split_results, reserved_stopwords)):
-            head_text, tail_text, head_tokens, tail_tokens = split_result            
+            head_text, tail_text, head_tokens, tail_tokens = split_result
+            #print(split_result)            
             if self.model_type in ['xlnet', 'roberta', 'bart']:
                 # xlent and roberta tokens include prefix (e.g. ▁ or Ġ')
-                cleaned_head_tokens = [t.replace(rs['model'].get_subword_prefix(), '') for t in head_tokens]
+                cleaned_head_tokens = [t.replace(prefix, '') for t in head_tokens]
+                #print(cleaned_head_tokens)
             else:
                 cleaned_head_tokens = head_tokens
 
             # generate aug_idx and subsitute mask
             aug_idxes = self._get_aug_idxes(head_tokens, rs['model'])
             aug_idxes.sort(reverse=True)
-            
+            #print(split_results[0])
+
             if reserved_stopword_tokens:
                 cleaned_head_tokens = self.substitute_back_reserved_stopwords(
                     cleaned_head_tokens, reserved_stopword_tokens, rs['model'])
 
             split_results[i] += (cleaned_head_tokens, aug_idxes, )
+            #print(split_results[0])
 
         # Pad aug_idxes
         max_aug_size = max([len(split_result[5]) for split_result in split_results])
+        #print(split_results)
+    
         for split_result in split_results:
             aug_idxes = split_result[5]
             for _ in range(max_aug_size - len(aug_idxes)):
                 aug_idxes.append(-1)
 
-        token_placeholder = rs['model'].get_mask_token()
+        if self.mask_token:
+            token_placeholder = self.mask_token
+        else:
+            token_placeholder = rs['model'].get_mask_token()
+        
+        
+        '''
         if self.model_type in ['xlnet', 'roberta', 'bart']:
             token_placeholder = rs['model'].get_subword_prefix() + token_placeholder  # Adding prefix for
+            #print(token_placeholder)
+        '''
+        #print(split_results[0][4])
 
         # Augment same index of aug by batch
         for i in range(max_aug_size):
@@ -225,7 +277,7 @@ class ContextualWordEmbsTransform(WordTransform):
             aug_input_poses = [] # store which input augmented. No record if padding
 
             for j, split_result in enumerate(split_results):
-                
+                #print(head_tokens)
                 head_tokens, aug_idx = split_result[4], split_result[5][i]
                 # -1 if it is padding 
                 if aug_idx == -1:
@@ -233,20 +285,29 @@ class ContextualWordEmbsTransform(WordTransform):
 
                 head_tokens.insert(aug_idx, token_placeholder)
                 aug_input_poses.append(j)
+                #print(head_tokens)
 
+                #print(head_tokens)
                 # some tokenizers handle special charas (e.g. don't can merge after decode)
+                '''
                 if self.model_type in ['bert', 'electra']:
                     ids = rs['model'].get_tokenizer().convert_tokens_to_ids(head_tokens)
                     masked_text = rs['model'].get_tokenizer().decode(ids).strip()
                 elif self.model_type in ['xlnet', 'roberta', 'bart']:
                     masked_text = rs['model'].get_tokenizer().convert_tokens_to_string(head_tokens).strip()
-
+                '''
+                if self.language in ["cn"]:
+                    masked_text = "".join(head_tokens)
+                else:
+                    masked_text = " ".join(head_tokens)
                 masked_texts.append(masked_text)
+                #print(masked_texts)
 
             if not len(masked_texts):
                 continue
 
             outputs = rs['model'].predict(masked_texts)
+            #print(outputs)
 
             for aug_input_pos, output, masked_text in zip(aug_input_poses, outputs, masked_texts):
                 split_result = split_results[aug_input_pos]
@@ -266,6 +327,7 @@ class ContextualWordEmbsTransform(WordTransform):
                 if candidate == '':
                     continue
 
+                candidate = candidate.strip()
                 head_tokens[aug_idx] = candidate
 
                 if len(head_tokens) > self.max_num_token:
@@ -277,7 +339,8 @@ class ContextualWordEmbsTransform(WordTransform):
        
         for split_result in split_results:
             tail_text, head_tokens = split_result[1], split_result[4]
-
+            #print(head_tokens)
+            '''
             ids = rs['model'].get_tokenizer().convert_tokens_to_ids(head_tokens)
             #print(ids)
             if self.model_type=="bert":
@@ -288,6 +351,11 @@ class ContextualWordEmbsTransform(WordTransform):
                     augmented_text += rs['model'].get_tokenizer().decode(id) + " "
                 augmented_text = augmented_text.rstrip()
             #print(augmented_text)
+            '''
+            if self.language in ["cn"]:
+                augmented_text = "".join(head_tokens)
+            else:
+                augmented_text = " ".join(head_tokens)
 
             if tail_text is not None:
                 augmented_text += ' ' + tail_text
@@ -309,15 +377,29 @@ class ContextualWordEmbsTransform(WordTransform):
         """
         if not data or not data.strip():
             return data
+        
+        #print(data)
+        if self.normal:
+            prefix = rs['model'].get_subword_prefix()
+        else:
+            prefix = self.prefix
+
+        #print(prefix)
         self.max_num_token = rs['model'].get_max_num_token()
+        #print(self.max_num_token)
         
         split_results, reserved_stopwords = self._pre_process(data, rs['model'])
+        #print(split_results)
         
         for i, (split_result, reserved_stopword_tokens) in enumerate(zip(split_results, reserved_stopwords)):
+            #print(split_result)
             head_text, tail_text, head_tokens, tail_tokens = split_result            
             if self.model_type in ['xlnet', 'roberta', 'bart']:
                 # xlent and roberta tokens include prefix (e.g. ▁ or Ġ')
-                cleaned_head_tokens = [t.replace(rs['model'].get_subword_prefix(), '') for t in head_tokens]
+                cleaned_head_tokens = [t.replace(prefix, '') for t in head_tokens]
+                #a = '▁今天'.replace('▁', '')
+                #print(a)
+                #print(cleaned_head_tokens)
             else:
                 cleaned_head_tokens = head_tokens
 
@@ -338,11 +420,17 @@ class ContextualWordEmbsTransform(WordTransform):
             for _ in range(max_aug_size - len(aug_idxes)):
                 aug_idxes.append(-1)
 
-        token_placeholder = rs['model'].get_mask_token()
+        if self.mask_token:
+            token_placeholder = self.mask_token
+        else:
+            token_placeholder = rs['model'].get_mask_token()
+
+        '''
         if self.model_type in ['xlnet', 'roberta', 'bart']:
             token_placeholder = rs['model'].get_subword_prefix() + token_placeholder  # Adding prefix for
-
+        '''
         # Augment same index of aug by batch
+        #print(split_results)
         for i in range(max_aug_size):
             original_tokens = []
             masked_texts = []
@@ -351,14 +439,16 @@ class ContextualWordEmbsTransform(WordTransform):
             for j, split_result in enumerate(split_results):
                 
                 head_tokens, aug_idx = split_result[4], split_result[5][i]
-                original_token = head_tokens[i]
-                # -1 if it is padding 
+                #print(head_tokens)
                 if aug_idx == -1:
                     continue
+                original_token = head_tokens[aug_idx]
+                # -1 if it is padding 
 
                 original_tokens.append(original_token)
                 head_tokens[aug_idx] = token_placeholder
 
+                '''
                 # remove continuous sub-word
                 to_remove_idxes = []
                 for k in range(aug_idx+1, len(head_tokens)):
@@ -373,24 +463,34 @@ class ContextualWordEmbsTransform(WordTransform):
                         break
                 for k in reversed(to_remove_idxes):
                     head_tokens[k] = ''
-
+                '''
+                #print(head_tokens)
                 aug_input_poses.append(j)
 
                 # some tokenizers handle special charas (e.g. don't can merge after decode)
+                '''
                 if self.model_type in ['bert', 'electra']:
                     ids = rs['model'].get_tokenizer().convert_tokens_to_ids(head_tokens)
                     masked_text = rs['model'].get_tokenizer().decode(ids).strip()
                 elif self.model_type in ['xlnet', 'roberta', 'bart']:
                     masked_text = rs['model'].get_tokenizer().convert_tokens_to_string(head_tokens).strip()
-
+                '''
+                #print(head_tokens)
+                if self.language in ["cn"]:
+                    masked_text = "".join(head_tokens)
+                else:
+                    masked_text = " ".join(head_tokens)
+                #print(masked_text)
                 masked_texts.append(masked_text)
                 # split_result[4], split_result[5][i] = head_tokens, aug_idx 
 
+            #print(masked_texts)
             if not len(masked_texts):
                 continue
             # print(i, head_tokens)
             # print(i, masked_texts, aug_idxes)
             outputs = rs['model'].predict(masked_texts, target_words=original_tokens, n=2)
+            #print(outputs)
 
             # Update doc
             for original_token, aug_input_pos, output, masked_text in zip(original_tokens, aug_input_poses, outputs, masked_texts):
@@ -411,7 +511,10 @@ class ContextualWordEmbsTransform(WordTransform):
                 if candidate == '':
                     candidate = original_token
 
+                candidate = candidate.strip()
                 head_tokens[aug_idx] = candidate
+                #print(candidate)
+                #print(head_tokens)
 
                 if len(head_tokens) > self.max_num_token:
                     for j in range(i+1, max_aug_size):
@@ -422,8 +525,14 @@ class ContextualWordEmbsTransform(WordTransform):
         augmented_texts = []
         for split_result in split_results:
             tail_text, head_tokens = split_result[1], split_result[4]
-
-
+            #print(head_tokens)
+            if self.language in ["cn"]:
+                augmented_text = "".join(head_tokens)
+            else:
+                augmented_text = " ".join(head_tokens)
+            #print(head_tokens)
+            # 此处的head_tokens拼接起来就是答案了为什么要把token转成id再转回来呢？
+            '''
             ids = rs['model'].get_tokenizer().convert_tokens_to_ids(head_tokens)
             augmented_text = rs['model'].get_tokenizer().decode(ids)
 
@@ -437,7 +546,7 @@ class ContextualWordEmbsTransform(WordTransform):
                 for id in ids:
                     augmented_text += rs['model'].get_tokenizer().decode(id) + " "
                 augmented_text = augmented_text.rstrip()
-
+            '''
             augmented_texts.append(augmented_text)
 
 
@@ -474,12 +583,13 @@ class ContextualWordEmbsTransform(WordTransform):
             split_result, reserved_stopword = self.split_text(d, model)
             split_results.append(split_result)
             reserved_stopwords.append(reserved_stopword)
+        #print(split_results)
         return split_results, reserved_stopwords
-    
 
 
 if __name__ == '__main__':
-    text = 'it is easy to say something but hard to do'
+    text = 'If there is no light in the world, I will be the light.'
+    #text = '今天天气不错，很适合出去玩。'
     backtrans_transform = ContextualWordEmbsTransform(action='substitute', aug_p=0.1)
     tran = backtrans_transform(text=text,force_apply=True,n=3)
     print(text)

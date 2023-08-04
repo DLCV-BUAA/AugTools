@@ -85,13 +85,17 @@ class WordTransform(TextTransform):
     
     def _get_aug_idxes(self, tokens, model=None):
         aug_cnt = self._generate_aug_cnt(len(tokens))
+        #print(aug_cnt)
         word_idxes = self._pre_skip_aug(tokens)
+        #print(word_idxes)
         word_idxes = self._skip_aug(word_idxes, tokens, model)
+        #print(word_idxes)
         if len(word_idxes) == 0:
             return []
         if len(word_idxes) < aug_cnt:
             aug_cnt = len(word_idxes)
         aug_idexes = self.sample(word_idxes, aug_cnt)
+        #print(aug_idexes)
         return aug_idexes
 
     def _get_random_aug_idxes(self, tokens, model=None):

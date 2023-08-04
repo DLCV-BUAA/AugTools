@@ -107,6 +107,7 @@ class Summarization(LanguageModels):
                 else:
                     results.append(predict_result)
         results = [r['summary_text'] for r in results]
+        #print(results)
         
         return results
         

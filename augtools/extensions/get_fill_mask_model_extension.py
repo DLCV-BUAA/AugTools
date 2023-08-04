@@ -19,7 +19,9 @@ class GetFMModelExtension(Extension):
                 device='cuda', 
                 max_length=300,
                 batch_size=32,
-        method='WORD'):
+                method='WORD',
+                normal=True,
+                prefix=None):
         
         
         self.model = FMModels(
@@ -29,7 +31,9 @@ class GetFMModelExtension(Extension):
             device=device, 
             max_length=max_length,
             batch_size=batch_size,
-        method=method)
+            method=method,
+            normal=normal,
+            prefix=prefix)
         
     def _get_rs(self, rs, **kwargs):
         rs['model'] = self.model
@@ -45,7 +49,9 @@ class FMModels(LanguageModels):
         device='cuda', 
         max_length=300,
         batch_size=32,
-        method='word'
+        method='word',
+        normal=True,
+        prefix=None
     ):
         super().__init__(device=device, model_type=model_type, method=method)
         try:
@@ -60,6 +66,8 @@ class FMModels(LanguageModels):
         device = self.convert_device(device)
         top_k = top_k if top_k else 5
         self.model = pipeline("fill-mask", model=model_path, device=device, top_k=top_k)
+        self.normal = normal
+        self.prefix = prefix
 
 
     def _predict_word(self, texts, target_words=None, n=1):
@@ -106,6 +114,7 @@ class FMModels(LanguageModels):
         predict_results = []
         with torch.no_grad():
             for i in range(0, len(texts), self.batch_size):
+                #print(texts)
                 predict_result = self.model(texts[i:i+self.batch_size])
                 if isinstance(predict_result, list) and len(predict_result) > 0:
                     if isinstance(predict_result[0], list):
@@ -113,19 +122,30 @@ class FMModels(LanguageModels):
                     else:
                         predict_results.extend([predict_result])
 
-        for result in predict_results:
-            temp_results = []
-            for r in result:
-                token = r['token_str']
-                if self.model_type in ['bert'] and token.startswith('##'):
-                    continue
-                # subword came without space for roberta but not normal subowrd prefix
-                if self.model_type in ['roberta', 'bart'] and not token.startswith(' '):
-                    continue
+        #print(predict_results)
+        if self.normal:
+            for result in predict_results:
+                temp_results = []
+                for r in result:
+                    token = r['token_str']
+                    if self.model_type in ['bert'] and token.startswith('##'):
+                        continue
+                    # subword came without space for roberta but not normal subowrd prefix
+                    if self.model_type in ['roberta', 'bart'] and not token.startswith(' '):
+                        continue
 
-                temp_results.append(token)
+                    temp_results.append(token)
 
-            results.append(temp_results)
+                results.append(temp_results)
+
+        else:
+            for result in predict_results:
+                temp_results = []
+                for r in result:
+                    token = r['token_str']
+                    temp_results.append(token)
+                # add other rules
+                results.append(temp_results)
     
         return results
 

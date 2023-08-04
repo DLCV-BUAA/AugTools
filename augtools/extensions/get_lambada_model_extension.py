@@ -196,7 +196,7 @@ class Lambada(LanguageModels):
         return generated_texts
 
 if __name__ == "__main__": 
-    extension = GetLambadaModelExtension(cls_model_dir='./model/lambada/cls', gen_model_dir='./model/lambada/gen', threshold=0.3, device='cuda')
+    extension = GetLambadaModelExtension(cls_model_dir='augtools/extensions/model/lambada/cls', gen_model_dir='augtools/extensions/model/lambada/gen', threshold=0.3, device='cuda')
     rs = None
     rs = extension(rs)
     filtered_results = rs['model'].predict(['0', '1', '2'], 5)
