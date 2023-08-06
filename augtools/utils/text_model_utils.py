@@ -1,5 +1,8 @@
 import augtools.utils.text_model_utils as normalization
 import numpy as np
+import torch
+import torch.functional as F
+import string
 class BaseModel:
     def __init__(self, method='CHAR'):
         self.method = method

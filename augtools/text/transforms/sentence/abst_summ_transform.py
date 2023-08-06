@@ -36,8 +36,8 @@ class AbstSummSentTransform(SentenceTransform):
 
     """
 
-    def __init__(self, model_path='t5-base', tokenizer_path='t5-base', device='cuda', action='substitute',
-        min_length=20, max_length=50, batch_size=32, temperature=1.0, top_k=50, top_p=0.9,):
+    def __init__(self, model_path='dongxq/test_model', tokenizer_path='dongxq/test_model', device='cuda', action='substitute',
+        min_length=10, max_length=20, batch_size=32, temperature=1.0, top_k=50, top_p=0.9,):
         super().__init__(
             action=action, device=device)
         self.aug_src = 'summarization'
@@ -82,9 +82,20 @@ class AbstSummSentTransform(SentenceTransform):
         return rs['model'].predict(all_data)
 
 if __name__ == '__main__':
-    text = 'it is easy to say something but hard to do'
+    '''
+    text = 'On the app itself, perplexed academic followers twittered among themselves as to \
+            which of its competitors might offer a substitute platform: Bluesky, perhaps, \
+            though it is still in development and you have to be invited to use it, \
+            or Mastodon, an early competitor, but which has fewer than 3 million, active users. \
+            Twitter does still have some cultural heft: last Tuesday the singer Labi Siffre used it\
+            to complain of a series of racist slights he had suffered during a visit to London.\
+            But in business terms Mr Musk’s rivals are circling. Just a day after the rebrand news,\
+            the video‑sharing platform TikTok responded with its own announcement \
+            that it was expanding into text‑only posts. '
+    '''
+    text = '相关争议事件中，相比于运营企业，消费者往往处于弱势地位，在维权过程中需要与运营企业多次交涉沟通，耗时费力才能挽回损失，有时遭遇运营企业拖延、推诿，甚至陷入维权僵局。此外，一些消费者还可能存在未能及时察觉误扣费或隐私泄露等问题，导致权益受损而不自知。舆论认为，解决共享充电宝行业问题多发的现状，需要各方参与、共管共治。企业在明确标注价格等事项外，还需明示消费者申诉反馈渠道，提高消费纠纷解决效率。'
     random_transform = AbstSummSentTransform()
     tran = random_transform(text=text,force_apply=True,n=1)
-    print(text)
+    #print(text)
     print(tran['text']) 
 

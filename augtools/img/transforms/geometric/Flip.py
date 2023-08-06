@@ -1,7 +1,7 @@
 import random
-
 from augtools.img.transform import DualTransform
-import functional as F
+import augtools.img.functional as F
+
 
 class Flip(DualTransform):
     """Flip the input either horizontally, vertically or both horizontally and vertically.
@@ -16,24 +16,30 @@ class Flip(DualTransform):
         uint8, float32
     """
 
-    def _compute_x_function(self, img, rs=None):
-        """Args:
-        d (int): code that specifies how to flip the input. 0 for vertical flipping, 1 for horizontal flipping,
-                -1 for both vertical and horizontal flipping (which is also could be seen as rotating the input by
-                180 degrees).
-        """
-        d = random.randint(0, 1)
-        return F.random_flip(img, d)
+    def __call__(self, *args, force_apply: bool = False, **kwargs):
+        if (random.random() < self.p) and not self.always_apply and not force_apply:
+            return kwargs
+        res = {}
 
-    # def get_params(self):
-    #     # Random int in the range [-1, 1]
-    #     return {"d": random.randint(-1, 1)}
-    #
-    # def _compute_bbox_function(self, y, rs=None):
-    #     return F.bbox_flip(y)
+        d = random.randint(-1, 1)
+        h, w, _ = kwargs["img"].shape
 
-    # def _compute_keypoint_function(self, y, rs=None):
-    #   return F.keypoint_flip(keypoint, **params)
+        if "img" in kwargs:
+            res["img"] = F.random_flip(kwargs["img"], d)
+
+        if "bbox" in kwargs:
+            bboxes = []
+            for item in kwargs["bbox"]:
+                bboxes.append(F.bbox_flip(item, d, h, w))
+            res["bbox"] = bboxes
+
+        if "keypoint" in kwargs:
+            points = []
+            for item in kwargs["keypoint"]:
+                points.append(F.keypoint_flip(item, d, h, w))
+            res["keypoint"] = points
+
+        return res
 
 
 if __name__ == '__main__':
@@ -43,12 +49,16 @@ if __name__ == '__main__':
     image = prefix + 'test.jpg'
 
     img = read_image(image)
-    # bboxs = [(50, 60, 50, 80), (50, 60, 50, 80)]
-    bbox = (50, 60, 50, 80)
+    print(img.shape)
+    bbox = [(170, 30, 300, 220)]
+    keypoint = [(230, 80, 1, 1)]
+
+    show_bbox_keypoint_image(img, bbox=bbox, keypoint=keypoint)
 
     transform = Flip()
-    result = transform(img=img, force_apply=True)
-    print(result['img'])
-    # print(result['bbox'])
+    re = transform(img=img, force_apply=True, bbox=bbox, keypoint=keypoint)
+    show_bbox_keypoint_image(re['img'], bbox=re['bbox'], keypoint=re['keypoint'])
 
-    show_image(result['img'])
+    # cc = A.HorizontalFlip(always_apply=True)
+    # result = cc(image=img, bboxes=bbox, keypoints=keypoint)
+    # show_bbox_keypoint_image(result['image'], bbox=result['bboxes'], keypoint=result['keypoints'])

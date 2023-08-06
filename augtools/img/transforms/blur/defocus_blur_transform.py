@@ -1,8 +1,5 @@
-
-
 from augtools.img.transform import ImageTransform
 from augtools.img.transforms.utils.img_utils import *
-import skimage as sk
 
 
 def disk(radius, alias_blur=0.1, dtype=np.float32):
@@ -21,14 +18,11 @@ def disk(radius, alias_blur=0.1, dtype=np.float32):
 
 
 class DefocusBlur(ImageTransform):
-    """
-
-    """
     def __init__(
         self,
         always_apply: bool = False,
         p: float = 0.5,
-        severity = 1,
+        severity: int = 1,
     ):
         super().__init__(always_apply=always_apply, p=p)
         self.severity = severity
@@ -43,6 +37,7 @@ class DefocusBlur(ImageTransform):
         for d in range(3):
             channels.append(cv2.filter2D(x[:, :, d], -1, kernel))
         channels = np.array(channels).transpose((1, 2, 0))  # 3x224x224 -> 224x224x3
+
         x = np.clip(channels, 0, 1) * 255
         x = x.astype(np.uint8)
 

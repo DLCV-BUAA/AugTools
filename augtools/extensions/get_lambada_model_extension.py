@@ -13,9 +13,10 @@ from augtools.extensions.extension import Extension
 from augtools.utils.file_utils import *
 from augtools.utils.text_model_utils import LanguageModels
 
-class GetLambdaModelExtension(Extension):
+class GetLambadaModelExtension(Extension):
     def __init__(self,
-        model_dir=None, 
+        cls_model_dir,
+        gen_model_dir,
         threshold=0.7, 
         min_length=100, 
         device='cuda', 
@@ -27,8 +28,9 @@ class GetLambdaModelExtension(Extension):
         repetition_penalty=1.0,
         method='sentence'):
         
-        self.model = Lambda(
-            model_dir=model_dir, 
+        self.model = Lambada(
+            cls_model_dir=cls_model_dir,
+            gen_model_dir=gen_model_dir,
             threshold=threshold,
             min_length=min_length, 
             device=device, 
@@ -44,10 +46,11 @@ class GetLambdaModelExtension(Extension):
         rs['model'] = self.model
         return rs
 
-class Lambda(LanguageModels):
+class Lambada(LanguageModels):
     def __init__(
         self, 
-        model_dir=None,
+        cls_model_dir,
+        gen_model_dir,
         threshold=0.7, 
         min_length=100, 
         device='cuda', 
@@ -77,23 +80,24 @@ class Lambda(LanguageModels):
         self.temperature = temperature
         self.top_k = top_k
         self.top_p = top_p
-        self.model_dir = model_dir
-        self.device = self.convert_device(device)
         self.repetition_penalty = repetition_penalty
         self.sep_token = '[SEP]'
         self.stop_token = '<|endoftext|>'
-
-        with open(os.path.join(model_dir, 'label_encoder.json')) as f:
+        self.gen_model_dir = gen_model_dir
+        self.cls_model_dir = cls_model_dir
+        
+        with open(os.path.join(cls_model_dir, 'label_encoder.json')) as f:
             self.label2id = json.load(f)
             self.id2label = {v:k for k, v in self.label2id.items()}
             
-        with open(os.path.join(model_dir, 'cls_config.json')) as f:
+        with open(os.path.join(cls_model_dir, 'cls_config.json')) as f:
             cls_config = json.load(f)
-            self.cls_model = ClassificationModel(cls_config['model_type'], model_dir, use_cuda=device != 'cpu', args={'silent':True})
+            self.cls_model = ClassificationModel(cls_config['model_type'], cls_model_dir, use_cuda=device != 'cpu', args={'silent':True})
         
-        self.gen_model = GPT2LMHeadModel.from_pretrained(model_dir)
+            
+        self.gen_model = GPT2LMHeadModel.from_pretrained(gen_model_dir)
         self.gen_model.eval()
-        self.gen_tokenizer = GPT2Tokenizer.from_pretrained(model_dir)
+        self.gen_tokenizer = GPT2Tokenizer.from_pretrained(gen_model_dir)
         self.to(self.device)
 
     def _predict_word(self, texts, target_words=None, n=1):
@@ -118,6 +122,7 @@ class Lambda(LanguageModels):
             input_text = '{} {}'.format(label, self.sep_token)
             input_ids = self.gen_tokenizer.encode(input_text, add_special_tokens=False, return_tensors='pt')
             input_ids = input_ids.to(self.device)
+            #print(input_text)
 
             # Generate
             num_round, last_round = divmod(n, self.batch_size)
@@ -137,7 +142,6 @@ class Lambda(LanguageModels):
                     repetition_penalty=self.repetition_penalty,
                     do_sample=True,
                     num_return_sequences=_n,
-                    num_workers=1,
                 )
 
                 if len(output_sequences.shape) > 2:
@@ -190,7 +194,10 @@ class Lambda(LanguageModels):
         if self.threshold:
             return self._filter(generated_texts)
         return generated_texts
-    
-if __name__ == '__main__':
-    Lambda()
 
+if __name__ == "__main__": 
+    extension = GetLambadaModelExtension(cls_model_dir='augtools/extensions/model/lambada/cls', gen_model_dir='augtools/extensions/model/lambada/gen', threshold=0.3, device='cuda')
+    rs = None
+    rs = extension(rs)
+    filtered_results = rs['model'].predict(['0', '1', '2'], 5)
+    print(filtered_results)
