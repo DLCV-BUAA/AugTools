@@ -10,7 +10,6 @@ from collections import defaultdict
 
 from augtools.utils.file_utils import *
 from augtools.text.transforms.word.word_transform import WordTransform
-from augtools.extensions.get_word_dict_model_extension import GetWordDcitModelExtension
 
 
 class ReservedTransform(WordTransform):
@@ -108,6 +107,7 @@ class ReservedTransform(WordTransform):
                 combination = list(combination)
 
             item = data.pop(0)
+            #print(item)
             for choice in item[1]:
                 combination.append((item[0],choice))
                 yield from self.generate_combinations(data,combination)
@@ -145,7 +145,10 @@ class ReservedTransform(WordTransform):
                 candidate_token_list.append((aug_idx,candidate_tokens))
         
             generated_combinations = []
+            #print(candidate_token_list)
+            
             for candidate_tokens in self.generate_combinations(candidate_token_list):
+                #print(candidate_tokens)
                 augmented_tokens = tokens
                 for candidate_token in candidate_tokens:
                     aug_idx,new_token = candidate_token
@@ -153,7 +156,7 @@ class ReservedTransform(WordTransform):
                         new_token = self._align_capitalization(original_token, new_token)
                     augmented_tokens[aug_idx] = new_token
                 
-                augmented_text = self.reverse_tokenizer(doc.get_augmented_tokens())
+                augmented_text = self.reverse_tokenizer(augmented_tokens)
 
                 same_as_original = False
                 if self.case_sensitive:
@@ -215,7 +218,7 @@ class ReservedTransform(WordTransform):
 if __name__ == '__main__':
     text = 'i eat an apple and hit someone'
     random_transform = ReservedTransform(reserved_tokens=[['i', 'I'], ['eat', 'have', 'enjoy'], ['an', 'a small', 'a red'], 
-                                          ['and', 'then'], ['hit', 'run into', 'bump into'], ['someone', 'a person', 'somebody']])
+                                          ['and', 'then'], ['hit', 'run into', 'bump into'], ['someone', 'a person', 'somebody']], generate_all_combinations=False, aug_p=0.3)
     tran = random_transform(text=text,force_apply=True,n=3)
     print(text)
     print(tran['text'])   

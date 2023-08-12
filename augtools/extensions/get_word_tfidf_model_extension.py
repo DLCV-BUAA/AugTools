@@ -156,12 +156,14 @@ class TFIDF(WordStatistics):
         
     
 if __name__ == "__main__":
-    extension = GetWordTFIDFModelExtension()
-    train_text = list(brown.sents(categories=["news"]))
-    extension.model.train(train_text)
-    extension.model.save(".\\resource")
-    '''
+    extension = GetWordTFIDFModelExtension(model_path="extensions\\resource")
+    #train_text = list(brown.sents(categories=["reviews"]))
+    
+    
+    #extension.model.train(train_text)
+    #extension.model.save(".\\resource")
+    
     rs = None
     rs = extension(rs)
-    print(rs['model']('apple'))
-    '''
+    #print(rs['model'])
+    print(rs['model']('luck'))

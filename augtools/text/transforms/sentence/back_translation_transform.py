@@ -30,7 +30,7 @@ class BackTranslationSentenceTransform(SentenceTransform):
 
     """
 
-    def __init__(self, from_model_name='facebook/wmt19-en-de', to_model_name='facebook/wmt19-de-en',
+    def __init__(self, from_model_name='Helsinki-NLP/opus-mt-en-ar', to_model_name='Helsinki-NLP/opus-mt-ar-en',
         device='cuda', batch_size=32, max_length=300, action='substitute'):
         super().__init__(
             action=action, aug_p=None, aug_min=None, aug_max=None, tokenizer=None, reverse_tokenizer=None)

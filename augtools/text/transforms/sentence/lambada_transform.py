@@ -38,7 +38,7 @@ class LambadaSentTransform(SentenceTransform):
 
     """
 
-    def __init__(self, cls_model_dir, gen_model_dir, treshold=0.7, device='cpu', action='insert',repetition_penalty=1.0,
+    def __init__(self, cls_model_dir, gen_model_dir, threshold=0.7, device='cpu', action='insert',repetition_penalty=1.0,
         min_length=100, max_length=300, batch_size=16, temperature=1.0, top_k=50, top_p=0.9,):
         super().__init__(
             action=action, device=device)
@@ -52,9 +52,10 @@ class LambadaSentTransform(SentenceTransform):
         self.top_p = top_p
 
         self.repetition_penalty = repetition_penalty
-        self.threshhold = treshold
+        self.threshold = threshold
         self.cls_model_dir = cls_model_dir
         self.gen_model_dir = gen_model_dir
+        self.threshold = threshold
 
         with open(os.path.join(cls_model_dir, 'label_encoder.json')) as json_file:
             self.label2id = json.load(json_file)       
@@ -62,7 +63,8 @@ class LambadaSentTransform(SentenceTransform):
     def _append_extensions(self):
         return [
             GetSentenceModelExtension(name=self.aug_src,
-                model_dir=self.model_dir, 
+                cls_model_dir=self.cls_model_dir, 
+                gen_model_dir = self.gen_model_dir,
                 threshold=self.threshold, 
                 min_length=self.min_length, 
                 device=self.device, 
@@ -96,9 +98,9 @@ class LambadaSentTransform(SentenceTransform):
         return rs['model'].predict(all_data)
     
 if __name__ == '__main__':
-    text = 'it is easy to say something but hard to do'
-    random_transform = LambadaSentTransform()
-    tran = random_transform(text=text,force_apply=True,n=1)
+    text = ['0', '1' , '2']
+    random_transform = LambadaSentTransform(cls_model_dir='augtools/extensions/model/lambada/cls', gen_model_dir='augtools/extensions/model/lambada/gen', threshold=0.3)
+    tran = random_transform(text=text, device='cpu', n=5)
     print(text)
     print(tran['text']) 
 

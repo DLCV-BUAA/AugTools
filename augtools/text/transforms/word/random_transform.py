@@ -8,7 +8,6 @@ import os
 
 from augtools.utils.file_utils import *
 from augtools.text.transforms.word.word_transform import WordTransform
-from augtools.extensions.get_word_dict_model_extension import GetWordDcitModelExtension
 
 
 class RandomTransform(WordTransform):
@@ -179,7 +178,7 @@ class RandomTransform(WordTransform):
 
 if __name__ == '__main__':
     text = 'i eat an apple and hit someone'
-    random_transform = RandomTransform()
+    random_transform = RandomTransform(action="SWAP")
     tran = random_transform(text=text,force_apply=True,n=3)
     print(text)
     print(tran['text'])   

@@ -99,6 +99,8 @@ class WordEmbsTransform(WordTransform):
         aug_idxes.sort(reverse=True)
 
         augmented_tokens = []
+
+        #print(rs['model'].get_vocab)
         
         for aug_idx, original_token in enumerate(tokens):
             # Skip if no augment for word

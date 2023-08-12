@@ -5,11 +5,11 @@ from itertools import product
 import cv2
 import numpy as np
 
-from augtools.text.transforms.word.synonmy_transform import SynonmyTransform
+from augtools.text.transforms.word.synonym_transform import SynonymTransform
 from augtools.extensions.get_word_dict_model_extension import GetWordDcitModelExtension
 
 
-class AntonymTransform(SynonmyTransform):
+class AntonymTransform(SynonymTransform):
     # https://arxiv.org/pdf/1809.02079.pdf
     """
     Augmenter that leverage semantic meaning to substitute word.

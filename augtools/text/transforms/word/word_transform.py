@@ -81,6 +81,8 @@ class WordTransform(TextTransform):
             return aug_min
         if aug_max and cnt > aug_max:
             return aug_max
+        
+        #print(cnt)
         return cnt
     
     def _get_aug_idxes(self, tokens, model=None):

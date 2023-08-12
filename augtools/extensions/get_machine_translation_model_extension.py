@@ -59,7 +59,9 @@ class MtModels(LanguageModels):
 
     def _predict_word(self, texts, target_words=None, n=1):
         src_translated_texts = self._translate_one_step_batched(texts, self.src_tokenizer, self.src_model)
+        #print(src_translated_texts)
         tgt_translated_texts = self._translate_one_step_batched(src_translated_texts, self.tgt_tokenizer, self.tgt_model)
+        #print(tgt_translated_texts)
         return tgt_translated_texts
     
     def _predict_sentence(self, texts, target_words=None, n=1):
@@ -76,7 +78,6 @@ class MtModels(LanguageModels):
             tokenized_dataset,
             batch_size=self.batch_size,
             shuffle=False,
-            num_workers=1
         )
 
         all_translated_ids = []

@@ -34,18 +34,21 @@ class TextTransform(BasicTransform):
                 aug_num = argn if argn is not None else self.n
                 action_func = self._action_select().get(self.action.lower(), None)
                 max_loop = 10
+                augment_result = []
+
                 for i in range(max_loop):
                     if action_func is not None:
                         if isinstance(clean_text, list):
                             augment_result = [action_func(d, rs) for d in clean_text]
                             break
                         else:
-                            augment_result = [action_func(clean_text, rs) for _ in range(aug_num)]
+                            augment_result += [action_func(clean_text, rs) for _ in range(aug_num)]
+                            #print(augment_result)
                             augment_result = self._duplicate_augments(augment_result)
                             if len(augment_result) >= aug_num:
                                 augment_result = augment_result[:aug_num]
                                 break
-                    
+
                 # TODO:去除重复增强结果   通过多个循环
                 kwargs[key] = augment_result    
   

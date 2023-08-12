@@ -15,8 +15,8 @@ def main(args):
 
 if __name__ == '__main__':
 	parser = argparse.ArgumentParser(description='parameters', prefix_chars='-')
-	parser.add_argument('--data_path', default='augtools/extensions/test/res/text/classification.csv', help='Data path')
-	parser.add_argument('--output_dir', default='augtools/extensions/test/res/text', help='File output directory')
+	parser.add_argument('--data_path', default='./test/res/text/classification.csv', help='Data path')
+	parser.add_argument('--output_dir', default='./test/res/text', help='File output directory')
 
 	args = parser.parse_args(args=[])
 

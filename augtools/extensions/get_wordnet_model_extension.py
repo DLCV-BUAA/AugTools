@@ -25,6 +25,7 @@ class WordNet(BaseModel):
         results = []
         for synonym in self.model.synsets(data, pos=pos, lang=self.lang):
             for lemma in synonym.lemmas(lang=self.lang):
+                #print(lemma)
                 if self.is_synonym:
                     results.append(lemma.name())
                 else:

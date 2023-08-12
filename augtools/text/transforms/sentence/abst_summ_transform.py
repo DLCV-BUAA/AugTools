@@ -93,7 +93,11 @@ if __name__ == '__main__':
             the video‑sharing platform TikTok responded with its own announcement \
             that it was expanding into text‑only posts. '
     '''
-    text = '相关争议事件中，相比于运营企业，消费者往往处于弱势地位，在维权过程中需要与运营企业多次交涉沟通，耗时费力才能挽回损失，有时遭遇运营企业拖延、推诿，甚至陷入维权僵局。此外，一些消费者还可能存在未能及时察觉误扣费或隐私泄露等问题，导致权益受损而不自知。舆论认为，解决共享充电宝行业问题多发的现状，需要各方参与、共管共治。企业在明确标注价格等事项外，还需明示消费者申诉反馈渠道，提高消费纠纷解决效率。'
+    text = '相关争议事件中，相比于运营企业，消费者往往处于弱势地位，在维权过程中需要与运营企业多次交涉沟通，\
+            耗时费力才能挽回损失，有时遭遇运营企业拖延、推诿，甚至陷入维权僵局。\
+            此外，一些消费者还可能存在未能及时察觉误扣费或隐私泄露等问题，导致权益受损而不自知。\
+            舆论认为，解决共享充电宝行业问题多发的现状，需要各方参与、共管共治。\
+            企业在明确标注价格等事项外，还需明示消费者申诉反馈渠道，提高消费纠纷解决效率。'
     random_transform = AbstSummSentTransform()
     tran = random_transform(text=text,force_apply=True,n=1)
     #print(text)

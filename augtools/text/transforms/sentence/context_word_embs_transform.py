@@ -1,6 +1,7 @@
 """
     Augmenter that apply operation (sentence level) to textual input based on abstractive summarization.
 """
+from typing import Iterable
 import warnings
 import random
 from itertools import product
@@ -41,7 +42,7 @@ class ContextualSentTransform(SentenceTransform):
 
     """
 
-    def __init__(self, model_path='gpt2', device='cuda', action='insert',
+    def __init__(self, model_path='gpt2', device='cpu', action='insert',
         min_length=100, max_length=500, batch_size=32, temperature=1.0, top_k=50, top_p=0.9,):
         super().__init__(
             action=action, device=device)
@@ -88,7 +89,7 @@ class ContextualSentTransform(SentenceTransform):
         return rs['model'].predict(all_data)
 
 if __name__ == '__main__':
-    text = 'it is easy to say something but hard to do'
+    text = 'it is easy to say'
     random_transform = ContextualSentTransform()
     tran = random_transform(text=text,force_apply=True,n=1)
     print(text)

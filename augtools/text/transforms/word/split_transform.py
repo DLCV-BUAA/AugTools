@@ -8,7 +8,6 @@ import os
 
 from augtools.utils.file_utils import *
 from augtools.text.transforms.word.word_transform import WordTransform
-from augtools.extensions.get_word_dict_model_extension import GetWordDcitModelExtension
 
 
 class SplitTransform(WordTransform):

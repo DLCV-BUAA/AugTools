@@ -115,15 +115,6 @@ class SynonmyTransform(WordTransform):
 
         return self.reverse_tokenizer(augmented_tokens)
 
-    @classmethod
-    def get_model(cls, aug_src, lang):
-        if aug_src == 'wordnet':
-            return nmw.WordNet(lang=lang, is_synonym=True)
-        elif aug_src == 'ppdb':
-            return init_ppdb_model(dict_path=dict_path, force_reload=force_reload)
-
-        raise ValueError('aug_src is not one of `wordnet` or `ppdb` while {} is passed.'.format(aug_src))
-
     def _append_extensions(self):
         return [
             GetWordDcitModelExtension(name=self.aug_src, lang=self.lang, is_synonym=True, method='word'),

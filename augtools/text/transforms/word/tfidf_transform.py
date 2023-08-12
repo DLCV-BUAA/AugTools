@@ -86,7 +86,7 @@ class TfIdfTransform(WordTransform):
         for _ in range(retry_cnt):
             for i, p in zip(possible_idxes, aug_probs):
                 if self.prob() < p:
-                    print(self.prob)
+                    #print(self.prob)
                     aug_idxes.append(i)
                     possible_idxes.remove(i)
 
