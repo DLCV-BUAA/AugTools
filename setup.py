@@ -45,6 +45,8 @@ setup(
         'gensim',
         'transformers',
         'sacremoses',
+        'simpletransformers',
+        'pandas',
     ],
     packages=find_packages(),
 )

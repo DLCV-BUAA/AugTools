@@ -7,7 +7,7 @@ class GetWordFasttextModelExtension(Extension):
     def __init__(self, file_path=None, max_num_vector=None, model_name=None, top_k=100, skip_check=True, method='WORD'):
         self.method = method
         self.model_name = 'wiki-news-300d-1M' if model_name is None else model_name
-        self.model = Glove(file_path, max_num_vector, self.model_name, top_k=top_k, skip_check=skip_check, method=method)
+        self.model = Fasttext(file_path, max_num_vector, self.model_name, top_k=top_k, skip_check=skip_check, method=method)
         
     def _get_rs(self, rs, **kwargs):
         rs['model'] = self.model
