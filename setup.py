@@ -32,9 +32,19 @@ setup(
     # setup.py 本身要依赖的包，这通常是为一些setuptools的插件准备的配置
     # 这里列出的包，不会自动安装。
     setup_requires=[
+        'pytorch',
+        'torchvision',
     ],
     # 表明当前模块依赖哪些包，若环境中没有，则会从pypi中下载安装
     install_requires=[
+        'opencv-python',
+        'numpy',
+        'matplotlib',
+        'gdown',
+        'nltk',
+        'gensim',
+        'transformers',
+        'sacremoses',
     ],
     packages=find_packages(),
 )

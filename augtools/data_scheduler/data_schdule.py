@@ -82,11 +82,19 @@ if __name__ == '__main__':
     from augtools.img.synthesis.synthesis_transform import SynthesisTransform
 
     dataset = ImageFolder(root=r'../extensions/resource/img/foreground', transform=transforms.ToTensor())
+    transform = [
+        # Brightness(),
+        # FogBlur(),
+        # Contrast(),
+        SynthesisTransform(coords=(0.3, 0.3), area=0.5),
+        SynthesisTransform(coords=(0.6, 0.6), area=0.5),
+    ]
+
     sampler = LabelSampler(
         dataset,
         label=[0, 3],
         num_per_label=1,
-        num_transforms_per_instance=5,
+        num_transforms_per_instance=len(transform),
     )
     # transform = [
     #     SynthesisTransform(rotation=0),
@@ -95,13 +103,7 @@ if __name__ == '__main__':
     #     SynthesisTransform(rotation=30),
     #     SynthesisTransform(rotation=40),
     # ]
-    transform = [
-        Brightness(),
-        FogBlur(),
-        Contrast(),
-        SynthesisTransform(coords=(0.3, 0.3), area=0.5),
-        SynthesisTransform(coords=(0.6, 0.6), area=0.5),
-    ]
+
     data_scheduler = DataScheduler(
         dataset,
         batch_size=1,
