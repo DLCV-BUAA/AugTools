@@ -2,7 +2,6 @@ from augtools.img.transform import DualTransform
 from augtools.img.transforms.utils.img_utils import *
 import random
 from augtools.img import functional as F
-import albumentations as A
 
 
 class ElasticTransform(DualTransform):
@@ -41,18 +40,18 @@ class ElasticTransform(DualTransform):
     """
 
     def __init__(
-        self,
-        alpha=1,
-        sigma=50,
-        alpha_affine=50,
-        interpolation=cv2.INTER_LINEAR,
-        border_mode=cv2.BORDER_REFLECT_101,
-        value=None,
-        mask_value=None,
-        always_apply=False,
-        approximate=False,
-        same_dxdy=False,
-        p=0.5,
+            self,
+            alpha=1,
+            sigma=50,
+            alpha_affine=50,
+            interpolation=cv2.INTER_LINEAR,
+            border_mode=cv2.BORDER_REFLECT_101,
+            value=None,
+            mask_value=None,
+            always_apply=False,
+            approximate=False,
+            same_dxdy=False,
+            p=0.5,
     ):
         super(ElasticTransform, self).__init__(always_apply, p)
         self.alpha = alpha
@@ -64,36 +63,31 @@ class ElasticTransform(DualTransform):
         self.mask_value = mask_value
         self.approximate = approximate
         self.same_dxdy = same_dxdy
+        self.random_state = random.randint(0, 10000)
 
-    def __call__(self, *args, force_apply: bool = False, **kwargs):
-        if (random.random() < self.p) and not self.always_apply and not force_apply:
-            return kwargs
+    def _append_extensions(self):
+        from augtools.extensions.get_image_param_extension import GetImageParamExtension
+        return [GetImageParamExtension()]
 
-        res = {}
-        random_state = random.randint(0, 10000)
-        h, w, _ = kwargs["img"].shape
+    def _compute_x_function(self, img, rs=None):
+        return F.elastic_transform(
+            img,
+            self.alpha,
+            self.sigma,
+            self.alpha_affine,
+            self.interpolation,
+            self.border_mode,
+            self.value,
+            np.random.RandomState(self.random_state),
+            self.approximate,
+            self.same_dxdy,
+        )
 
-        if "img" in kwargs:
-            res["img"] = F.elastic_transform(
-                            img,
-                            self.alpha,
-                            self.sigma,
-                            self.alpha_affine,
-                            self.interpolation,
-                            self.border_mode,
-                            self.value,
-                            np.random.RandomState(random_state),
-                            self.approximate,
-                            self.same_dxdy,
-                            )
-
-        if "bbox" in kwargs:
-            bboxes = []
-            for item in kwargs["bbox"]:
-                bboxes.append(self.apply_to_bbox(item, random_state=random_state, h=h, w=w))
-            res["bbox"] = bboxes
-
-        return res
+    def _compute_bbox_function(self, y, rs=None):
+        h, w, bboxes = rs['rows'], rs['cols'], []
+        for item in y:
+            bboxes.append(self.apply_to_bbox(item, random_state=self.random_state, h=h, w=w))
+        return bboxes
 
     def apply_to_bbox(self, bbox, random_state=None, h=None, w=None):
         rows, cols = h, w
@@ -117,24 +111,27 @@ class ElasticTransform(DualTransform):
         bbox_returned = F.normalize_bbox(bbox_returned, rows, cols)
         return bbox_returned
 
+    def _compute_keypoint_function(self, y, rs=None):
+        pass
 
-if __name__ == '__main__':
-    from augtools.utils.test_utils import *
-
-    prefix = f'../test/'
-    image = prefix + 'test.jpg'
-
-    img = read_image(image)
-    print(img.shape)
-    bbox = [(170 / 500, 30 / 375, 300 / 500, 220 / 375)]
-    keypoint = [(230, 80, 1, 1)]
-
-    show_bbox_keypoint_image_float(img, bbox=bbox, keypoint=keypoint)
-
-    transform = ElasticTransform()
-    re = transform(img=img, force_apply=True, bbox=bbox, keypoint=keypoint)
-    show_bbox_keypoint_image_float(re['img'], bbox=re['bbox'], keypoint=None)
-
-    cc = A.ElasticTransform(always_apply=True)
-    result = cc(image=img, bboxes=bbox)
-    show_bbox_keypoint_image_float(result['image'], bbox=result['bboxes'], keypoint=None)
+# if __name__ == '__main__':
+#     from augtools.utils.test_utils import *
+#     import albumentations as A
+#
+#     prefix = f'../test/'
+#     image = prefix + 'test.jpg'
+#
+#     img = read_image(image)
+#     print(img.shape)
+#     bbox = [(170 / 500, 30 / 375, 300 / 500, 220 / 375)]
+#     keypoint = [(230, 80, 1, 1)]
+#
+#     show_bbox_keypoint_image_float(img, bbox=bbox, keypoint=keypoint)
+#
+#     transform = ElasticTransform()
+#     re = transform(img=img, force_apply=True, bbox=bbox, keypoint=keypoint)
+#     show_bbox_keypoint_image_float(re['img'], bbox=re['bbox'], keypoint=None)
+#
+#     cc = A.ElasticTransform(always_apply=True)
+#     result = cc(image=img, bboxes=bbox)
+#     show_bbox_keypoint_image_float(result['image'], bbox=result['bboxes'], keypoint=None)

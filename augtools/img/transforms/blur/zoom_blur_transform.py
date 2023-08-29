@@ -44,16 +44,15 @@ class ZoomBlur(ImageTransform):
         # x = np.clip(x, 0, 1) * 255
         # x = x.astype(np.uint8)
 
-
-if __name__ == '__main__':
-    from augtools.utils.test_utils import *
-
-    prefix = f'../test/'
-    image = prefix + 'test.jpg'
-
-    img = read_image(image)
-    # print(img)
-
-    transform = ZoomBlur()
-    result = transform(img=img, force_apply=True)
-    show_image(result['img'])
+# if __name__ == '__main__':
+#     from augtools.utils.test_utils import *
+#
+#     prefix = f'../test/'
+#     image = prefix + 'test.jpg'
+#
+#     img = read_image(image)
+#     # print(img)
+#
+#     transform = ZoomBlur()
+#     result = transform(img=img, force_apply=True)
+#     show_image(result['img'])

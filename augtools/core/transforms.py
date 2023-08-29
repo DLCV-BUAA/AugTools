@@ -60,6 +60,8 @@ class BasicTransform:
                     kwargs['x'] = xy[0]
                     kwargs['y'] = xy[1:]
         if (random.random() < self.p) or self.always_apply or force_apply:
+            # 将输入的 img bbox keypoint 划分到 rs['x'] rs['y'] 里面
+            # 再通过 kwargs[rs['x'].key] 来取得对应资源 ...
             rs = self._prepare_rs(**kwargs)  # 准备计算所需要的资源       输出是字典形式，计算时可以通过params['name']获取
 
             kwargs, rs = self._pre_process_x(**kwargs, rs=rs)  # 对数据进行处理
@@ -153,8 +155,6 @@ class BasicTransform:
     def _post_process_x(self, rs=None, **kwargs):
         """
             对数据进行后处理，对图像来说，将图像转换为统一的格式等等
-            
-            
             实现：可能是rs里面存放一系列的undo操作的函数，这个函数里面只是依次执行rs的undo操作以及内存回收操作
         Returns:
             _type_: _description_
@@ -194,71 +194,8 @@ class BasicTransform:
         """
         # extensions = defaultdict(list)
         # extensions['x'] = [
-
         # ]
         # extensions['y'] = [
-
         # ]
         extensions = []
         return extensions
-
-# class DualTransform(BasicTransform):
-#     """Transform for segmentation task."""
-
-#     @property
-#     def targets(self) -> Dict[str, Callable]:
-#         return {
-#             "image": self.apply,
-#             "mask": self.apply_to_mask,
-#             "masks": self.apply_to_masks,
-#             "bboxes": self.apply_to_bboxes,
-#             "keypoints": self.apply_to_keypoints,
-#         }
-
-#     def apply_to_bbox(self, bbox: BoxInternalType, **params) -> BoxInternalType:
-#         raise NotImplementedError("Method apply_to_bbox is not implemented in class " + self.__class__.__name__)
-
-#     def apply_to_keypoint(self, keypoint: KeypointInternalType, **params) -> KeypointInternalType:
-#         raise NotImplementedError("Method apply_to_keypoint is not implemented in class " + self.__class__.__name__)
-
-#     def apply_to_bboxes(self, bboxes: Sequence[BoxType], **params) -> List[BoxType]:
-#         return [self.apply_to_bbox(tuple(bbox[:4]), **params) + tuple(bbox[4:]) for bbox in bboxes]  # type: ignore
-
-#     def apply_to_keypoints(self, keypoints: Sequence[KeypointType], **params) -> List[KeypointType]:
-#         return [  # type: ignore
-#             self.apply_to_keypoint(tuple(keypoint[:4]), **params) + tuple(keypoint[4:])  # type: ignore
-#             for keypoint in keypoints
-#         ]
-
-#     def apply_to_mask(self, img: np.ndarray, **params) -> np.ndarray:
-#         return self.apply(img, **{k: cv2.INTER_NEAREST if k == "interpolation" else v for k, v in params.items()})
-
-#     def apply_to_masks(self, masks: Sequence[np.ndarray], **params) -> List[np.ndarray]:
-#         return [self.apply_to_mask(mask, **params) for mask in masks]
-
-
-# class ImageOnlyTransform(BasicTransform):
-#     """Transform applied to image only."""
-
-#     @property
-#     def targets(self) -> Dict[str, Callable]:
-#         return {"image": self.apply}
-
-
-# class NoOp(DualTransform):
-#     """Does nothing"""
-
-#     def apply_to_keypoint(self, keypoint: KeypointInternalType, **params) -> KeypointInternalType:
-#         return keypoint
-
-#     def apply_to_bbox(self, bbox: BoxInternalType, **params) -> BoxInternalType:
-#         return bbox
-
-#     def apply(self, img: np.ndarray, **params) -> np.ndarray:
-#         return img
-
-#     def apply_to_mask(self, img: np.ndarray, **params) -> np.ndarray:
-#         return img
-
-#     def get_transform_init_args_names(self) -> Tuple:
-#         return ()

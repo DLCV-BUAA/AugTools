@@ -1,14 +1,14 @@
 from augtools.img.transform import ImageTransform
-from augtools.img.transforms.utils.img_utils import *
 import skimage as sk
+import numpy as np
 
 
 class ImpulseBlur(ImageTransform):
     def __init__(
-        self,
-        always_apply: bool = False,
-        p: float = 0.5,
-        severity: int = 1,
+            self,
+            always_apply: bool = False,
+            p: float = 0.5,
+            severity: int = 1,
     ):
         super().__init__(always_apply=always_apply, p=p)
         self.severity = severity
@@ -23,18 +23,17 @@ class ImpulseBlur(ImageTransform):
 
         return x
 
-
-if __name__ == '__main__':
-    from augtools.utils.test_utils import *
-
-    prefix = f'../test/'
-    image = prefix + 'test.jpg'
-
-    img = read_image(image)
-    # print(img)
-
-    transform = ImpulseBlur()
-    result = transform(img=img, force_apply=True)
-    # print(result['img'])
-
-    show_image(result['img'])
+# if __name__ == '__main__':
+#     from augtools.utils.test_utils import *
+#
+#     prefix = f'../test/'
+#     image = prefix + 'test.jpg'
+#
+#     img = read_image(image)
+#     # print(img)
+#
+#     transform = ImpulseBlur()
+#     result = transform(img=img, force_apply=True)
+#     # print(result['img'])
+#
+#     show_image(result['img'])

@@ -1,7 +1,6 @@
 from augtools.img.transform import DualTransform
-import random
 import augtools.img.functional as F
-import albumentations as A
+from augtools.extensions.get_image_param_extension import GetImageParamExtension
 
 
 class Crop(DualTransform):
@@ -27,45 +26,40 @@ class Crop(DualTransform):
         self.x_max = x_max
         self.y_max = y_max
 
-    def __call__(self, *args, force_apply: bool = False, **kwargs):
-        if (random.random() < self.p) and not self.always_apply and not force_apply:
-            return kwargs
-        res = {}
+    def _append_extensions(self):
+        return [GetImageParamExtension()]
 
-        h, w, _ = kwargs["img"].shape
-        if "img" in kwargs:
-            res["img"] = F.crop(kwargs["img"], x_min=self.x_min, y_min=self.y_min, x_max=self.x_max, y_max=self.y_max)
+    def _compute_x_function(self, img, rs=None):
+        return F.crop(img, x_min=self.x_min, y_min=self.y_min, x_max=self.x_max, y_max=self.y_max)
 
-        if "bbox" in kwargs:
-            bboxes = []
-            for item in kwargs["bbox"]:
-                bboxes.append(F.bbox_crop(item, x_min=self.x_min, y_min=self.y_min, x_max=self.x_max, y_max=self.y_max,
-                                          rows=h, cols=w))
-            res["bbox"] = bboxes
+    def _compute_bbox_function(self, y, rs=None):
+        h, w, bboxes = rs['rows'], rs['cols'], []
+        for item in y:
+            bboxes.append(F.bbox_crop(item, x_min=self.x_min, y_min=self.y_min, x_max=self.x_max, y_max=self.y_max,
+                                      rows=h, cols=w))
+        return bboxes
 
-        if "keypoint" in kwargs:
-            points = []
-            for item in kwargs["keypoint"]:
-                points.append(F.crop_keypoint_by_coords(item,
-                                                        crop_coords=(self.x_min, self.y_min, self.x_max, self.y_max)))
-            res["keypoint"] = points
-        return res
+    def _compute_keypoint_function(self, y, rs=None):
+        h, w, points = rs['rows'], rs['cols'], []
+        for item in y:
+            points.append(F.crop_keypoint_by_coords(item, crop_coords=(self.x_min, self.y_min, self.x_max, self.y_max)))
+        return points
 
-
-if __name__ == '__main__':
-    from augtools.utils.test_utils import *
-
-    prefix = f'../test/'
-    image = prefix + 'test.jpg'
-
-    img = read_image(image)
-    bbox = [(30, 170, 230, 300)]
-
-    transform = Crop(20, 240, 180, 310)
-    re = transform(img=img, force_apply=True, bbox=bbox)
-    show_bbox_keypoint_image(img, bbox=bbox, keypoint=None)
-
-    cc = A.Crop(20, 240, 180, 310, always_apply=True)
-    result = cc(image=img, bboxes=bbox)
-    show_bbox_keypoint_image(re['img'], bbox=re['bbox'], keypoint=None)
-    show_bbox_keypoint_image(result['image'], bbox=result['bboxes'], keypoint=None)
+# if __name__ == '__main__':
+#     from augtools.utils.test_utils import *
+#     import albumentations as A
+#
+#     prefix = f'../test/'
+#     image = prefix + 'test.jpg'
+#
+#     img = read_image(image)
+#     bbox = [(30, 170, 230, 300)]
+#
+#     transform = Crop(20, 240, 180, 310)
+#     re = transform(img=img, force_apply=True, bbox=bbox)
+#     show_bbox_keypoint_image(img, bbox=bbox, keypoint=None)
+#
+#     cc = A.Crop(20, 240, 180, 310, always_apply=True)
+#     result = cc(image=img, bboxes=bbox)
+#     show_bbox_keypoint_image(re['img'], bbox=re['bbox'], keypoint=None)
+#     show_bbox_keypoint_image(result['image'], bbox=result['bboxes'], keypoint=None)

@@ -1,15 +1,17 @@
 from augtools.img.transform import ImageTransform
 from augtools.img.transforms.utils.img_utils import *
 from io import BytesIO
-from augtools.img.utils import clipped_zoom
+from augtools.img.functional import clipped_zoom
+from PIL import Image as PILImage
+from augtools.img.functional import MotionImage
 
 
 class Snow(ImageTransform):
     def __init__(
-        self,
-        always_apply: bool = False,
-        p: float = 0.5,
-        severity: int = 1,
+            self,
+            always_apply: bool = False,
+            p: float = 0.5,
+            severity: int = 1,
     ):
         super().__init__(always_apply=always_apply, p=p)
         self.severity = severity
@@ -41,18 +43,17 @@ class Snow(ImageTransform):
         x = c[6] * x + (1 - c[6]) * np.maximum(x, cv2.cvtColor(x, cv2.COLOR_RGB2GRAY).reshape(224, 224, 1) * 1.5 + 0.5)
         return np.clip(x + snow_layer + np.rot90(snow_layer, k=2), 0, 1) * 255
 
-
-if __name__ == '__main__':
-    from augtools.utils.test_utils import *
-
-    prefix = f'../test/'
-    image = prefix + 'test.jpg'
-
-    img = read_image(image)
-    # print(img)
-
-    transform = Snow()
-    result = transform(img=img, force_apply=True)
-    print(result['img'])
-
-    show_image(result['img'])
+# if __name__ == '__main__':
+#     from augtools.utils.test_utils import *
+#
+#     prefix = f'../test/'
+#     image = prefix + 'test.jpg'
+#
+#     img = read_image(image)
+#     # print(img)
+#
+#     transform = Snow()
+#     result = transform(img=img, force_apply=True)
+#     print(result['img'])
+#
+#     show_image(result['img'])

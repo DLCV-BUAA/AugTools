@@ -1,7 +1,8 @@
 from augtools.img.transform import ImageTransform
-from augtools.img.transforms.utils.img_utils import *
 from skimage.filters import gaussian
 from scipy.ndimage.interpolation import map_coordinates
+import numpy as np
+import cv2
 
 
 class Elastic(ImageTransform):
@@ -48,18 +49,17 @@ class Elastic(ImageTransform):
         x = x.astype(np.uint8)
         return x
 
-
-if __name__ == '__main__':
-    from augtools.utils.test_utils import *
-
-    prefix = f'../test/'
-    image = prefix + 'test.jpg'
-
-    img = read_image(image)
-    # print(img)
-
-    transform = Elastic()
-    result = transform(img=img, force_apply=True)
-    # print(result['img'])
-
-    show_image(result['img'])
+# if __name__ == '__main__':
+#     from augtools.utils.test_utils import *
+#
+#     prefix = f'../test/'
+#     image = prefix + 'test.jpg'
+#
+#     img = read_image(image)
+#     # print(img)
+#
+#     transform = Elastic()
+#     result = transform(img=img, force_apply=True)
+#     # print(result['img'])
+#
+#     show_image(result['img'])

@@ -3,7 +3,7 @@ from typing import Any, Optional, Sequence, Tuple, TypeVar, cast
 import math
 from augtools.img import random_utils
 from scipy.ndimage import gaussian_filter
-
+from scipy.ndimage import zoom as scizoom
 
 NumType = Union[int, float, np.ndarray]
 BoxInternalType = Tuple[float, float, float, float]
@@ -17,6 +17,87 @@ ImageColorType = Union[float, Sequence[float]]
 ScaleFloatType = Union[float, Tuple[float, float]]
 ScaleIntType = Union[int, Tuple[int, int]]
 FillValueType = Optional[Union[int, float, Sequence[int], Sequence[float]]]
+
+
+class MotionImage(WandImage):
+    def motion_blur(self, radius=0.0, sigma=0.0, angle=0.0):
+        wandlibrary.MagickMotionBlurImage(self.wand, radius, sigma, angle)
+
+
+def clipped_zoom(img, zoom_factor):
+    h = img.shape[0]
+    # ceil crop height(= crop width)
+    ch = int(np.ceil(h / zoom_factor))
+
+    top = (h - ch) // 2
+    img = scizoom(img[top:top + ch, top:top + ch], (zoom_factor, zoom_factor, 1), order=1)
+    # trim off any extra pixels
+    trim_top = (img.shape[0] - h) // 2
+
+    return img[trim_top:trim_top + h, trim_top:trim_top + h]
+
+
+def plasma_fractal(mapsize=256, wibbledecay=3):
+    """
+    Generate a heightmap using diamond-square algorithm.
+    Return square 2d array, side length 'mapsize', of floats in range 0-255.
+    'mapsize' must be a power of two.
+    """
+    assert (mapsize & (mapsize - 1) == 0)
+    maparray = np.empty((mapsize, mapsize), dtype=np.float_)
+    maparray[0, 0] = 0
+    stepsize = mapsize
+    wibble = 100
+
+    def wibbledmean(array):
+        return array / 4 + wibble * np.random.uniform(-wibble, wibble, array.shape)
+
+    def fillsquares():
+        """For each square of points stepsize apart,
+           calculate middle value as mean of points + wibble"""
+        cornerref = maparray[0:mapsize:stepsize, 0:mapsize:stepsize]
+        squareaccum = cornerref + np.roll(cornerref, shift=-1, axis=0)
+        squareaccum += np.roll(squareaccum, shift=-1, axis=1)
+        maparray[stepsize // 2:mapsize:stepsize,
+        stepsize // 2:mapsize:stepsize] = wibbledmean(squareaccum)
+
+    def filldiamonds():
+        """For each diamond of points stepsize apart,
+           calculate middle value as mean of points + wibble"""
+        mapsize = maparray.shape[0]
+        drgrid = maparray[stepsize // 2:mapsize:stepsize, stepsize // 2:mapsize:stepsize]
+        ulgrid = maparray[0:mapsize:stepsize, 0:mapsize:stepsize]
+        ldrsum = drgrid + np.roll(drgrid, 1, axis=0)
+        lulsum = ulgrid + np.roll(ulgrid, -1, axis=1)
+        ltsum = ldrsum + lulsum
+        maparray[0:mapsize:stepsize, stepsize // 2:mapsize:stepsize] = wibbledmean(ltsum)
+        tdrsum = drgrid + np.roll(drgrid, 1, axis=1)
+        tulsum = ulgrid + np.roll(ulgrid, -1, axis=0)
+        ttsum = tdrsum + tulsum
+        maparray[stepsize // 2:mapsize:stepsize, 0:mapsize:stepsize] = wibbledmean(ttsum)
+
+    while stepsize >= 2:
+        fillsquares()
+        filldiamonds()
+        stepsize //= 2
+        wibble /= wibbledecay
+
+    maparray -= maparray.min()
+    return maparray / maparray.max()
+
+
+def disk(radius, alias_blur=0.1, dtype=np.float32):
+    if radius <= 8:
+        L = np.arange(-8, 8 + 1)
+        ksize = (3, 3)
+    else:
+        L = np.arange(-radius, radius + 1)
+        ksize = (5, 5)
+    X, Y = np.meshgrid(L, L)
+    aliased_disk = np.array((X ** 2 + Y ** 2) <= radius ** 2, dtype=dtype)
+    aliased_disk /= np.sum(aliased_disk)
+
+    return cv2.GaussianBlur(aliased_disk, ksize=ksize, sigmaX=alias_blur)
 
 
 def get_num_channels(image: np.ndarray) -> int:
@@ -474,24 +555,7 @@ def bbox_rotate(bbox: Tuple, angle: float, method: str, rows: int, cols: int):
 
 
 def bbox_shift_scale_rotate(bbox, angle, scale, dx, dy, rotate_method, rows, cols):  # skipcq: PYL-W0613
-    """Rotates, shifts and scales a bounding box. Rotation is made by angle degrees,
-    scaling is made by scale factor and shifting is made by dx and dy.
 
-    Args:
-        bbox (tuple): A bounding box `(x_min, y_min, x_max, y_max)`.
-        angle (int): Angle of rotation in degrees.
-        scale (int): Scale factor.
-        dx (int): Shift along x-axis in pixel units.
-        dy (int): Shift along y-axis in pixel units.
-        rotate_method(str): Rotation method used. Should be one of: "largest_box", "ellipse".
-            Default: "largest_box".
-        rows (int): Image rows.
-        cols (int): Image cols.
-
-    Returns:
-        A bounding box `(x_min, y_min, x_max, y_max)`.
-
-    """
     height, width = rows, cols
     center = (width / 2, height / 2)
     if rotate_method == "ellipse":
@@ -541,8 +605,9 @@ def keypoint_shift_scale_rotate(keypoint, angle, scale, dx, dy, rows, cols):
 def transpose(img: np.ndarray) -> np.ndarray:
     return img.transpose(1, 0, 2) if len(img.shape) > 2 else img.transpose(1, 0)
 
+
 def bbox_transpose(
-    bbox: KeypointInternalType, axis: int
+        bbox: KeypointInternalType, axis: int
 ) -> KeypointInternalType:  # skipcq: PYL-W0613
     """Transposes a bounding box along given axis.
 
@@ -589,7 +654,6 @@ def keypoint_transpose(keypoint: KeypointInternalType) -> KeypointInternalType:
     return y, x, angle, scale
 
 
-
 def bbox_from_mask(mask):
     """Create bounding box from binary mask (fast version)
 
@@ -609,18 +673,17 @@ def bbox_from_mask(mask):
     return x_min, y_min, x_max + 1, y_max + 1
 
 
-
 def elastic_transform(
-    img: np.ndarray,
-    alpha: float,
-    sigma: float,
-    alpha_affine: float,
-    interpolation: int = cv2.INTER_LINEAR,
-    border_mode: int = cv2.BORDER_REFLECT_101,
-    value: Optional[ImageColorType] = None,
-    random_state: Optional[np.random.RandomState] = None,
-    approximate: bool = False,
-    same_dxdy: bool = False,
+        img: np.ndarray,
+        alpha: float,
+        sigma: float,
+        alpha_affine: float,
+        interpolation: int = cv2.INTER_LINEAR,
+        border_mode: int = cv2.BORDER_REFLECT_101,
+        value: Optional[ImageColorType] = None,
+        random_state: Optional[np.random.RandomState] = None,
+        approximate: bool = False,
+        same_dxdy: bool = False,
 ):
     """Elastic deformation of images as described in [Simard2003]_ (with modifications).
     Based on https://gist.github.com/ernestum/601cdf56d2b424757de5
@@ -702,14 +765,14 @@ def resize(img, height, width, interpolation=cv2.INTER_LINEAR):
 
 
 def perspective(
-    img: np.ndarray,
-    matrix: np.ndarray,
-    max_width: int,
-    max_height: int,
-    border_val: Union[int, float, List[int], List[float], np.ndarray],
-    border_mode: int,
-    keep_size: bool,
-    interpolation: int,
+        img: np.ndarray,
+        matrix: np.ndarray,
+        max_width: int,
+        max_height: int,
+        border_val: Union[int, float, List[int], List[float], np.ndarray],
+        border_mode: int,
+        keep_size: bool,
+        interpolation: int,
 ):
     h, w = img.shape[:2]
     perspective_func = _maybe_process_in_chunks(
@@ -729,13 +792,13 @@ def perspective(
 
 
 def perspective_bbox(
-    bbox: BoxInternalType,
-    height: int,
-    width: int,
-    matrix: np.ndarray,
-    max_width: int,
-    max_height: int,
-    keep_size: bool,
+        bbox: BoxInternalType,
+        height: int,
+        width: int,
+        matrix: np.ndarray,
+        max_width: int,
+        max_height: int,
+        keep_size: bool,
 ) -> BoxInternalType:
     x1, y1, x2, y2 = denormalize_bbox(bbox, height, width)[:4]
 
@@ -766,6 +829,7 @@ def rotation2DMatrixToEulerAngles(matrix: np.ndarray, y_up: bool = False) -> flo
 
 KeypointInternalType = Tuple[float, float, float, float]
 
+
 def keypoint_scale(keypoint: KeypointInternalType, scale_x: float, scale_y: float) -> KeypointInternalType:
     """Scales a keypoint by scale_x and scale_y.
 
@@ -783,13 +847,13 @@ def keypoint_scale(keypoint: KeypointInternalType, scale_x: float, scale_y: floa
 
 
 def perspective_keypoint(
-    keypoint: KeypointInternalType,
-    height: int,
-    width: int,
-    matrix: np.ndarray,
-    max_width: int,
-    max_height: int,
-    keep_size: bool,
+        keypoint: KeypointInternalType,
+        height: int,
+        width: int,
+        matrix: np.ndarray,
+        max_width: int,
+        max_height: int,
+        keep_size: bool,
 ) -> KeypointInternalType:
     x, y, angle, scale = keypoint
 
@@ -808,4 +872,3 @@ def perspective_keypoint(
         return keypoint_scale((x, y, angle, scale), scale_x, scale_y)
 
     return x, y, angle, scale
-

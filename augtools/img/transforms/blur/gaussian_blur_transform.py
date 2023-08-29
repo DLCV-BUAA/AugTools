@@ -1,10 +1,5 @@
 import warnings
 import random
-from itertools import product
-
-import cv2
-import numpy as np
-
 from augtools.img.transform import ImageTransform
 from augtools.img.transforms.utils.img_utils import *
 
@@ -31,11 +26,11 @@ class GaussianBlur(ImageTransform):
     """
 
     def __init__(
-        self,
-        blur_limit = (3, 7),
-        sigma_limit = 0,
-        always_apply = False,   
-        p = 0.5,
+            self,
+            blur_limit=(3, 7),
+            sigma_limit=0,
+            always_apply=False,
+            p=0.5,
     ):
         super().__init__(always_apply, p)
         self.blur_limit = to_tuple(blur_limit, 0)
@@ -49,29 +44,27 @@ class GaussianBlur(ImageTransform):
             )
 
         if (self.blur_limit[0] != 0 and self.blur_limit[0] % 2 != 1) or (
-            self.blur_limit[1] != 0 and self.blur_limit[1] % 2 != 1
+                self.blur_limit[1] != 0 and self.blur_limit[1] % 2 != 1
         ):
             raise ValueError("GaussianBlur supports only odd blur limits.")
-        
+
         self.ksize = random.randrange(self.blur_limit[0], self.blur_limit[1] + 1)
         if self.ksize != 0 and self.ksize % 2 != 1:
-            self.ksize = (self.ksize + 1) % (self.blur_limit[1] + 1) 
+            self.ksize = (self.ksize + 1) % (self.blur_limit[1] + 1)
         self.sigma = random.uniform(*self.sigma_limit)
-    
+
     def _compute_x_function(self, img, rs=None):
         return gaussian_blur(img, ksize=self.ksize, sigma=self.sigma)
-    
-    
-if __name__ == '__main__':
-    from augtools.utils.test_utils import *
-    prefix = f'../test/'
-    image = prefix + 'test.jpg'
-    
-    img = read_image(image)
 
-    transform = GaussianBlur()
-    result = transform(img=img, force_apply=True)
-    print(result['img'])
-
-    show_image(result['img'])
-    
+# if __name__ == '__main__':
+#     from augtools.utils.test_utils import *
+#     prefix = f'../test/'
+#     image = prefix + 'test.jpg'
+#
+#     img = read_image(image)
+#
+#     transform = GaussianBlur()
+#     result = transform(img=img, force_apply=True)
+#     print(result['img'])
+#
+#     show_image(result['img'])

@@ -470,3 +470,133 @@ Lambada模型在使用前需要运行三个文件，首先运行`get_lambada_mod
 ##### 3.5.3 原理解释
 
 这个Augmentor实际上是词级别RandomAug中的SWAP操作豪华版。它的作用是将句子中指定位置的token根据选中的模式进行交换操作。如果模式是neighbor就随机选择是向左交换还是向右交换。如果模式是left就向左交换，模式是right就向右交换。向左交换则该token与它前面的一个token进行交换，如果该token为第一个token，就和最后一个token进行交换；向右交换则该token与它后面的一个token进行交换，如果该token为最后一个token，就和第一个token进行交换。模式是random就把指定位置的token和句子中随机一个位置（除自己外）的token进行交换。
+
+
+
+## Data Augmentation For Image
+
+### 1 Blur 噪声
+
+#### 1.1 Gaussion 高斯噪声
+
+- `augtools/img/transforms/blur/gaussian_blur_transform.py`
+
+#### 1.2 Shot 散粒噪声
+
+- `augtools/img/transforms/blur/shot_noise_transform.py`
+
+#### 1.3 Impulse 脉冲噪声
+
+- `augtools/img/transforms/blur/impulse_noise_transform.py`
+
+#### 1.4 Speckle
+
+- `augtools/img/transforms/blur/speckle_noise_transform.py`
+
+### 2 Filter实现的模糊
+
+此部分属于使用滤波器进行的像素级别的增强。
+
+#### 2.1 Defocus 
+
+- `augtools/img/transforms/blur/defocus_blur_transform.py`
+
+#### 2.2 Glass
+
+- `augtools/img/transforms/blur/glass_blur_transform.py`
+
+#### 2.3 Motion
+
+- `augtools/img/transforms/blur/motion_blur_transform.py`
+
+### 3 特殊天气模拟
+
+模拟特殊天气，如雾、雪等。
+
+#### 3.1 Snow
+
+- `augtools/img/transforms/blur/snow.py`
+
+#### 3.2 Frost
+
+- `augtools/img/transforms/blur/frost.py`
+
+#### 3.3 Fog
+
+- `augtools/img/transforms/blur/fog.py`
+
+### 4 剩余像素级别的调整增强
+
+此部分也属于是像素级别的增强，但无法归类
+
+#### 4.1 Brightness
+
+- `augtools/img/transforms/blur/brightness.py`
+
+#### 4.2 Contrast
+
+- `augtools/img/transforms/blur/contrast.py`
+
+#### 4.3 Saturate
+
+- `augtools/img/transforms/blur/saturate.py`
+
+#### 4.4 Pixelate
+
+- `augtools/img/transforms/blur/pixelate.py`
+
+#### 4.5 Zoom
+
+- `augtools/img/transforms/blur/zoom_blur_transform.py`
+
+### 5 Geometric
+
+此部分属于几何上的增强，如旋转、翻转等，一般带有 BBox 和 Keypoint 等内容的变换。
+
+#### 5.1 ShiftScaleRotate
+
+- `augtools/img/transforms/geometric/ShiftScaleRotate.py`
+
+#### 5.2 Elastic
+
+- `augtools/img/transforms/geometric/ElasticTransform.py`
+
+#### 5.3 Perspective
+
+- `augtools/img/transforms/geometric/Perspective.py`
+
+#### 5.4 PiecewiseAffine
+
+- `augtools/img/transforms/geometric/PiecewiseAffine.py`
+
+#### 5.5 VerticalFlip
+
+- `augtools/img/transforms/geometric/VerticalFlip.py`
+
+#### 5.6 HorizaontalFlip
+
+- `augtools/img/transforms/geometric/HorizontalFlip.py`
+
+#### 5.7 Flip
+
+- `augtools/img/transforms/geometric/Flip.py`
+
+#### 5.8 Transpose
+
+- `augtools/img/transforms/geometric/Transpose.py`
+
+### 6 Crops
+
+#### 6.1 RandomCrop
+
+- `augtools/img/transforms/crops/random_crop_transform.py`
+
+#### 6.2 CenterCrop
+
+- `augtools/img/transforms/crops/center_crop_transform.py`
+
+#### 6.3 Crop
+
+- `augtools/img/transforms/crops/crop_transform.py`
+
+### 4 Synthesis

@@ -1,28 +1,14 @@
 from augtools.img.transform import ImageTransform
 from augtools.img.transforms.utils.img_utils import *
-
-
-def disk(radius, alias_blur=0.1, dtype=np.float32):
-    if radius <= 8:
-        L = np.arange(-8, 8 + 1)
-        ksize = (3, 3)
-    else:
-        L = np.arange(-radius, radius + 1)
-        ksize = (5, 5)
-    X, Y = np.meshgrid(L, L)
-    aliased_disk = np.array((X ** 2 + Y ** 2) <= radius ** 2, dtype=dtype)
-    aliased_disk /= np.sum(aliased_disk)
-
-    # supersample disk to antialias
-    return cv2.GaussianBlur(aliased_disk, ksize=ksize, sigmaX=alias_blur)
+from augtools.img.functional import disk
 
 
 class DefocusBlur(ImageTransform):
     def __init__(
-        self,
-        always_apply: bool = False,
-        p: float = 0.5,
-        severity: int = 1,
+            self,
+            always_apply: bool = False,
+            p: float = 0.5,
+            severity: int = 1,
     ):
         super().__init__(always_apply=always_apply, p=p)
         self.severity = severity
@@ -43,18 +29,17 @@ class DefocusBlur(ImageTransform):
 
         return x
 
-
-if __name__ == '__main__':
-    from augtools.utils.test_utils import *
-
-    prefix = f'../test/'
-    image = prefix + 'test.jpg'
-
-    img = read_image(image)
-    # print(img)
-
-    transform = DefocusBlur()
-    result = transform(img=img, force_apply=True)
-    # print(result['img'])
-
-    show_image(result['img'])
+# if __name__ == '__main__':
+#     from augtools.utils.test_utils import *
+#
+#     prefix = f'../test/'
+#     image = prefix + 'test.jpg'
+#
+#     img = read_image(image)
+#     # print(img)
+#
+#     transform = DefocusBlur()
+#     result = transform(img=img, force_apply=True)
+#     # print(result['img'])
+#
+#     show_image(result['img'])

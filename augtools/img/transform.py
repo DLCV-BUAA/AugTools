@@ -75,7 +75,7 @@ class DualTransform(ImageTransform):
         for key in rs['y']:
             if kwargs[key] is not None:
                 y_rs = kwargs[key]
-                y_rs = self._compute_function_y_select.get(key)(kwargs[key], rs)
+                y_rs = self._compute_function_y_select.get(key)(y_rs, rs)
                 kwargs[key] = y_rs
         return kwargs, rs
 

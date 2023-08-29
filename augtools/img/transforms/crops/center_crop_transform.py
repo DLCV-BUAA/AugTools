@@ -1,7 +1,5 @@
 from augtools.img.transform import DualTransform
-import random
 import augtools.img.functional as F
-import albumentations as A
 
 
 class CenterCrop(DualTransform):
@@ -27,45 +25,41 @@ class CenterCrop(DualTransform):
         self.height = height
         self.width = width
 
-    def __call__(self, *args, force_apply: bool = False, **kwargs):
-        if (random.random() < self.p) and not self.always_apply and not force_apply:
-            return kwargs
-        res = {}
+    def _append_extensions(self):
+        from augtools.extensions.get_image_param_extension import GetImageParamExtension
+        return [GetImageParamExtension()]
 
-        h, w, _ = kwargs["img"].shape
-        if "img" in kwargs:
-            res["img"] = F.center_crop(kwargs["img"], self.height, self.width)
+    def _compute_x_function(self, img, rs=None):
+        return F.center_crop(img, self.height, self.width)
 
-        if "bbox" in kwargs:
-            bboxes = []
-            for item in kwargs["bbox"]:
-                bboxes.append(F.bbox_center_crop(item, self.height, self.width, h, w))
-            res["bbox"] = bboxes
+    def _compute_bbox_function(self, y, rs=None):
+        h, w, bboxes = rs['rows'], rs['cols'], []
+        for item in y:
+            bboxes.append(F.bbox_center_crop(item, self.height, self.width, h, w))
+        return bboxes
 
-        if "keypoint" in kwargs:
-            points = []
-            for item in kwargs["keypoint"]:
-                points.append(F.keypoint_center_crop(item, self.height, self.width, h, w))
-            res["keypoint"] = points
+    def _compute_keypoint_function(self, y, rs=None):
+        h, w, points = rs['rows'], rs['cols'], []
+        for item in y:
+            points.append(F.keypoint_center_crop(item, self.height, self.width, h, w))
+        return points
 
-        return res
-
-
-if __name__ == '__main__':
-    from augtools.utils.test_utils import *
-
-    prefix = f'../test/'
-    image = prefix + 'test.jpg'
-
-    img = read_image(image)
-    bbox = [(30, 170, 230, 300)]
-    keypoint = [(230, 80, 1, 1)]
-
-    transform = CenterCrop(300, 350)
-    re = transform(img=img, force_apply=True, bbox=bbox, keypoint=keypoint)
-    show_bbox_keypoint_image(img, bbox=bbox, keypoint=keypoint)
-
-    cc = A.CenterCrop(300, 350, always_apply=True)
-    result = cc(image=img, bboxes=bbox, keypoints=keypoint)
-    show_bbox_keypoint_image(re['img'], bbox=re['bbox'], keypoint=re['keypoint'])
-    show_bbox_keypoint_image(result['image'], bbox=result['bboxes'], keypoint=result['keypoints'])
+# if __name__ == '__main__':
+#     from augtools.utils.test_utils import *
+#     import albumentations as A
+#
+#     prefix = f'../test/'
+#     image = prefix + 'test.jpg'
+#
+#     img = read_image(image)
+#     bbox = [(30, 170, 230, 300)]
+#     keypoint = [(230, 80, 1, 1)]
+#
+#     transform = CenterCrop(300, 350)
+#     re = transform(img=img, force_apply=True, bbox=bbox, keypoint=keypoint)
+#     show_bbox_keypoint_image(img, bbox=bbox, keypoint=keypoint)
+#
+#     cc = A.CenterCrop(300, 350, always_apply=True)
+#     result = cc(image=img, bboxes=bbox, keypoints=keypoint)
+#     show_bbox_keypoint_image(re['img'], bbox=re['bbox'], keypoint=re['keypoint'])
+#     show_bbox_keypoint_image(result['image'], bbox=result['bboxes'], keypoint=result['keypoints'])

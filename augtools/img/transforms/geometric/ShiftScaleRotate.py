@@ -2,7 +2,6 @@ from augtools.img.transform import DualTransform
 from augtools.img.transforms.utils.img_utils import *
 import random
 import augtools.img.functional as F
-import albumentations as A
 
 
 class ShiftScaleRotate(DualTransform):
@@ -52,23 +51,23 @@ class ShiftScaleRotate(DualTransform):
     """
 
     def __init__(
-        self,
-        shift_limit=0.0625,
-        shift_limit_x=None,
-        shift_limit_y=None,
+            self,
+            shift_limit=0.0625,
+            shift_limit_x=None,
+            shift_limit_y=None,
 
-        scale_limit=0.1,
-        rotate_limit=45,
+            scale_limit=0.1,
+            rotate_limit=45,
 
-        # 插值用的一些内容 ?
-        interpolation=cv2.INTER_LINEAR,
-        border_mode=cv2.BORDER_REFLECT_101,
-        value=None,
-        mask_value=None,
-        rotate_method="largest_box",
+            # 插值用的一些内容 ?
+            interpolation=cv2.INTER_LINEAR,
+            border_mode=cv2.BORDER_REFLECT_101,
+            value=None,
+            mask_value=None,
+            rotate_method="largest_box",
 
-        always_apply=False,
-        p=0.5,
+            always_apply=False,
+            p=0.5,
     ):
         super(ShiftScaleRotate, self).__init__(always_apply, p)
         self.shift_limit_x = to_tuple(shift_limit_x if shift_limit_x is not None else shift_limit)
@@ -87,52 +86,51 @@ class ShiftScaleRotate(DualTransform):
         if self.rotate_method not in ["largest_box", "ellipse"]:
             raise ValueError(f"Rotation method {self.rotate_method} is not valid.")
 
-    def __call__(self, *args, force_apply: bool = False, **kwargs):
-        if (random.random() < self.p) and not self.always_apply and not force_apply:
-            return kwargs
+        self.angle = random.uniform(self.rotate_limit[0], self.rotate_limit[1])
+        self.scale = random.uniform(self.scale_limit[0], self.scale_limit[1])
+        self.dx = random.uniform(self.shift_limit_x[0], self.shift_limit_x[1])
+        self.dy = random.uniform(self.shift_limit_y[0], self.shift_limit_y[1])
 
-        res = {}
-        angle = random.uniform(self.rotate_limit[0], self.rotate_limit[1])
-        scale = random.uniform(self.scale_limit[0], self.scale_limit[1])
-        dx = random.uniform(self.shift_limit_x[0], self.shift_limit_x[1])
-        dy = random.uniform(self.shift_limit_y[0], self.shift_limit_y[1])
-        height, width = img.shape[0], img.shape[1]
+    def _append_extensions(self):
+        from augtools.extensions.get_image_param_extension import GetImageParamExtension
+        return [GetImageParamExtension()]
 
-        if "img" in kwargs:
-            res["img"] = F.shift_scale_rotate(img, angle, scale, dx, dy, self.interpolation, self.border_mode, self.value)
+    def _compute_x_function(self, img, rs=None):
+        return F.shift_scale_rotate(img, self.angle, self.scale, self.dx, self.dy, self.interpolation, self.border_mode,
+                                    self.value)
 
-        if "bbox" in kwargs:
-            bboxes = []
-            for item in kwargs["bbox"]:
-                bboxes.append(F.bbox_shift_scale_rotate(item, angle, scale, dx, dy, self.rotate_method, height, width))
-            res["bbox"] = bboxes
+    def _compute_bbox_function(self, y, rs=None):
+        h, w, bboxes = rs['rows'], rs['cols'], []
+        for item in y:
+            bboxes.append(
+                F.bbox_shift_scale_rotate(item, self.angle, self.scale, self.dx, self.dy, self.rotate_method, h,
+                                          w))
+        return bboxes
 
-        if "keypoint" in kwargs:
-            points = []
-            for item in kwargs["keypoint"]:
-                points.append(F.keypoint_shift_scale_rotate(item, angle, scale, dx, dy, height, width))
-            res["keypoint"] = points
+    def _compute_keypoint_function(self, y, rs=None):
+        h, w, points = rs['rows'], rs['cols'], []
+        for item in y:
+            points.append(F.keypoint_shift_scale_rotate(item, self.angle, self.scale, self.dx, self.dy, h, w))
+        return points
 
-        return res
-
-
-if __name__ == '__main__':
-    from augtools.utils.test_utils import *
-
-    prefix = f'../test/'
-    image = prefix + 'test.jpg'
-
-    img = read_image(image)
-    print(img.shape)
-    bbox = [(170/500, 30/375, 300/500, 220/375)]
-    keypoint = [(230, 80, 1, 1)]
-
-    show_bbox_keypoint_image_float(img, bbox=bbox, keypoint=keypoint)
-
-    transform = ShiftScaleRotate()
-    re = transform(img=img, force_apply=True, bbox=bbox, keypoint=keypoint)
-    show_bbox_keypoint_image_float(re['img'], bbox=re['bbox'], keypoint=re['keypoint'])
-
-    cc = A.ShiftScaleRotate(always_apply=True)
-    result = cc(image=img, bboxes=bbox, keypoints=keypoint)
-    show_bbox_keypoint_image_float(result['image'], bbox=result['bboxes'], keypoint=result['keypoints'])
+# if __name__ == '__main__':
+#     from augtools.utils.test_utils import *
+#     import albumentations as A
+#
+#     prefix = f'../test/'
+#     image = prefix + 'test.jpg'
+#
+#     img = read_image(image)
+#     print(img.shape)
+#     bbox = [(170 / 500, 30 / 375, 300 / 500, 220 / 375)]
+#     keypoint = [(230, 80, 1, 1)]
+#
+#     show_bbox_keypoint_image_float(img, bbox=bbox, keypoint=keypoint)
+#
+#     transform = ShiftScaleRotate()
+#     re = transform(img=img, force_apply=True, bbox=bbox, keypoint=keypoint)
+#     show_bbox_keypoint_image_float(re['img'], bbox=re['bbox'], keypoint=re['keypoint'])
+#
+#     cc = A.ShiftScaleRotate(always_apply=True)
+#     result = cc(image=img, bboxes=bbox, keypoints=keypoint)
+#     show_bbox_keypoint_image_float(result['image'], bbox=result['bboxes'], keypoint=result['keypoints'])

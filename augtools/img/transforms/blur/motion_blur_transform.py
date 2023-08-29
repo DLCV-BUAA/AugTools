@@ -1,11 +1,9 @@
-
 from augtools.img.transform import ImageTransform
 from augtools.img.transforms.utils.img_utils import *
 import albumentations as A
 
 
 class MotionBlur(ImageTransform):
-
     """
     Apply motion blur to the input image using a random-sized kernel.
 
@@ -23,11 +21,11 @@ class MotionBlur(ImageTransform):
     """
 
     def __init__(
-        self,
-        blur_limit: Tuple = (3, 7), # ScaleIntType = Union[int, Tuple[int, int]]
-        allow_shifted: bool = True,
-        always_apply: bool = False,
-        p: float = 0.5,
+            self,
+            blur_limit: Tuple = (3, 7),  # ScaleIntType = Union[int, Tuple[int, int]]
+            allow_shifted: bool = True,
+            always_apply: bool = False,
+            p: float = 0.5,
     ):
         super().__init__(always_apply=always_apply, p=p)
         self.allow_shifted = allow_shifted
@@ -80,16 +78,15 @@ class MotionBlur(ImageTransform):
         # FMain.convolve(img, kernel=kernel)
         # 创造一个 kernel 来 filter，什么样的 kernel 有这样的性质呢 ?
 
-
-if __name__ == '__main__':
-    from augtools.utils.test_utils import *
-
-    prefix = f'../test/'
-    image = prefix + 'test.jpg'
-
-    img = read_image(image)
-
-    transform = MotionBlur(blur_limit=(3, 25), always_apply=True, allow_shifted=False)
-    result = transform(img=img, force_apply=True)
-
-    show_image(result['img'])
+# if __name__ == '__main__':
+#     from augtools.utils.test_utils import *
+#
+#     prefix = f'../test/'
+#     image = prefix + 'test.jpg'
+#
+#     img = read_image(image)
+#
+#     transform = MotionBlur(blur_limit=(3, 25), always_apply=True, allow_shifted=False)
+#     result = transform(img=img, force_apply=True)
+#
+#     show_image(result['img'])

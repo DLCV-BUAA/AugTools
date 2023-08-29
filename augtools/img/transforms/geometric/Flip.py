@@ -16,49 +16,46 @@ class Flip(DualTransform):
         uint8, float32
     """
 
-    def __call__(self, *args, force_apply: bool = False, **kwargs):
-        if (random.random() < self.p) and not self.always_apply and not force_apply:
-            return kwargs
-        res = {}
+    def __init__(self, always_apply: bool = False, p: float = 0.5, return_type=None):
+        super(Flip, self).__init__(always_apply, p, return_type)
+        self.d = random.randint(-1, 1)
 
-        d = random.randint(-1, 1)
-        h, w, _ = kwargs["img"].shape
+    def _append_extensions(self):
+        from augtools.extensions.get_image_param_extension import GetImageParamExtension
+        return [GetImageParamExtension()]
 
-        if "img" in kwargs:
-            res["img"] = F.random_flip(kwargs["img"], d)
+    def _compute_x_function(self, img, rs=None):
+        return F.random_flip(img, self.d)
 
-        if "bbox" in kwargs:
-            bboxes = []
-            for item in kwargs["bbox"]:
-                bboxes.append(F.bbox_flip(item, d, h, w))
-            res["bbox"] = bboxes
+    def _compute_bbox_function(self, y, rs=None):
+        h, w, bboxes = rs['rows'], rs['cols'], []
+        for item in y:
+            bboxes.append(F.bbox_flip(item, self.d, h, w))
+        return bboxes
 
-        if "keypoint" in kwargs:
-            points = []
-            for item in kwargs["keypoint"]:
-                points.append(F.keypoint_flip(item, d, h, w))
-            res["keypoint"] = points
+    def _compute_keypoint_function(self, y, rs=None):
+        h, w, points = rs['rows'], rs['cols'], []
+        for item in y:
+            points.append(F.keypoint_flip(item, self.d, h, w))
+        return points
 
-        return res
-
-
-if __name__ == '__main__':
-    from augtools.utils.test_utils import *
-
-    prefix = f'../test/'
-    image = prefix + 'test.jpg'
-
-    img = read_image(image)
-    print(img.shape)
-    bbox = [(170, 30, 300, 220)]
-    keypoint = [(230, 80, 1, 1)]
-
-    show_bbox_keypoint_image(img, bbox=bbox, keypoint=keypoint)
-
-    transform = Flip()
-    re = transform(img=img, force_apply=True, bbox=bbox, keypoint=keypoint)
-    show_bbox_keypoint_image(re['img'], bbox=re['bbox'], keypoint=re['keypoint'])
-
-    # cc = A.HorizontalFlip(always_apply=True)
-    # result = cc(image=img, bboxes=bbox, keypoints=keypoint)
-    # show_bbox_keypoint_image(result['image'], bbox=result['bboxes'], keypoint=result['keypoints'])
+# if __name__ == '__main__':
+#     from augtools.utils.test_utils import *
+#
+#     prefix = f'../test/'
+#     image = prefix + 'test.jpg'
+#
+#     img = read_image(image)
+#     print(img.shape)
+#     bbox = [(170, 30, 300, 220)]
+#     keypoint = [(230, 80, 1, 1)]
+#
+#     show_bbox_keypoint_image(img, bbox=bbox, keypoint=keypoint)
+#
+#     transform = Flip()
+#     re = transform(img=img, force_apply=True, bbox=bbox, keypoint=keypoint)
+#     show_bbox_keypoint_image(re['img'], bbox=re['bbox'], keypoint=re['keypoint'])
+#
+#     # cc = A.HorizontalFlip(always_apply=True)
+#     # result = cc(image=img, bboxes=bbox, keypoints=keypoint)
+#     # show_bbox_keypoint_image(result['image'], bbox=result['bboxes'], keypoint=result['keypoints'])
